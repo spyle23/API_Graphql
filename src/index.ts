@@ -2,6 +2,7 @@ import "reflect-metadata";
 import express from "express";
 import * as tq from "type-graphql";
 import resolvers from "./resolvers";
+import { context } from "./context";
 import cors from "cors";
 import { createServer } from "http";
 import { execute, subscribe } from "graphql";
@@ -20,7 +21,7 @@ const PORT = process.env.PORT || 4000;
 
   const httpServer = createServer(app);
   const schema = await tq.buildSchema({ resolvers, emitSchemaFile: true });
-
+  // create web socket server
   const wsServer = new WebSocketServer({
     server: httpServer,
     path: "/graphql",
@@ -31,6 +32,7 @@ const PORT = process.env.PORT || 4000;
       schema,
       execute,
       subscribe,
+      //handle event onConnect if one client is connected
       onConnect: async (_ctx) => {
         console.log("connected!!");
       },
@@ -40,6 +42,13 @@ const PORT = process.env.PORT || 4000;
 
   const server = new ApolloServer({
     schema,
+    context: async ({ req }) => {
+      const token = req.headers.authorization;
+      return {
+        ...context,
+        token,
+      };
+    },
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
       {

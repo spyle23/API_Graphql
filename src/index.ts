@@ -1,4 +1,4 @@
-import "reflect-metadata"
+import "reflect-metadata";
 import express from "express";
 import * as tq from "type-graphql";
 import resolvers from "./resolvers";
@@ -6,7 +6,9 @@ import cors from "cors";
 import { createServer } from "http";
 import { execute, subscribe } from "graphql";
 import { ApolloServer } from "apollo-server-express";
-import { SubscriptionServer } from "subscriptions-transport-ws";
+import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
+import { WebSocketServer } from "ws";
+import { useServer } from "graphql-ws/lib/use/ws";
 
 require("dotenv").config();
 
@@ -19,17 +21,32 @@ const PORT = process.env.PORT || 4000;
   const httpServer = createServer(app);
   const schema = await tq.buildSchema({ resolvers, emitSchemaFile: true });
 
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: "/graphql",
+  });
+
+  const serverCleanup = useServer(
+    {
+      schema,
+      execute,
+      subscribe,
+      onConnect: async (_ctx) => {
+        console.log("connected!!");
+      },
+    },
+    wsServer
+  );
+
   const server = new ApolloServer({
     schema,
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
     introspection: true,
   });
 
   await server.start();
   server.applyMiddleware({ app, cors: false });
-  SubscriptionServer.create(
-    { schema, execute, subscribe },
-    { server: httpServer, path: server.graphqlPath }
-  );
+
   httpServer.listen(PORT, () => {
     console.log(
       `🚀 Query endpoint ready at http://localhost:${PORT}${server.graphqlPath}`

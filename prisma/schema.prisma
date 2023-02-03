@@ -2,7 +2,21 @@ generator client {
     provider = "prisma-client-js"
 }
 
+generator typegraphql {
+    provider="typegraphql-prisma"
+}
+
 datasource db {
     provider = "mysql"
     url      = env("DATABASE_URL")
+}
+
+model User {
+    id        Int     @id @default(autoincrement())
+    email     String  @unique
+    firstname String?
+    lastname  String?
+    password  String
+    photo     String? @db.Text
+    civilite  String?
 }

@@ -40,12 +40,27 @@ const PORT = process.env.PORT || 4000;
 
   const server = new ApolloServer({
     schema,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
+    ],
     introspection: true,
   });
 
   await server.start();
-  server.applyMiddleware({ app, cors: false });
+  server.applyMiddleware({
+    app,
+    bodyParserConfig: { limit: "50mb" },
+    cors: false,
+  });
 
   httpServer.listen(PORT, () => {
     console.log(

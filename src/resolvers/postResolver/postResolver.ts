@@ -1,4 +1,4 @@
-import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Post } from "@generated/type-graphql/models/Post";
 import { Context } from "../../context";
 import { PostInput } from "./type";
@@ -6,6 +6,21 @@ import { ApolloError } from "apollo-server-express";
 
 @Resolver(Post)
 export class PostResolver {
+
+  @Query(()=>[Post])
+  async postByUser(@Arg("userId") userId: number, @Ctx() ctx: Context){
+    try {
+      const posts = await ctx.prisma.post.findMany({
+        where: {
+          userId: userId
+        }
+      });
+      return posts
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite")
+    }
+  }
+
   @Mutation(() => String)
   async createPost(
     @Arg("data") data: PostInput,

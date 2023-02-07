@@ -13,6 +13,21 @@ type Mutation {
   signup(userInput: SignupInput!): String!
 }
 
+type Post {
+  _count: PostCount
+  createdAt: DateTime!
+  description: String!
+  id: Int!
+  image: String
+  title: String!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+type PostCount {
+  comments: Int!
+}
+
 """inputs for post"""
 input PostInput {
   description: String!
@@ -21,6 +36,7 @@ input PostInput {
 }
 
 type Query {
+  postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): User
 }
 

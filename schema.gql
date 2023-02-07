@@ -3,6 +3,43 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
+"""
+The javascript `Date` as string. Type represents date and time as the ISO Date string.
+"""
+scalar DateTime
+
+type Mutation {
+  signup(userInput: SignupInput!): String!
+}
+
 type Query {
-  getMessage: String!
+  profile(userId: Float!): User
+}
+
+"""user inputs"""
+input SignupInput {
+  civilite: String
+  email: String!
+  firstname: String
+  lastname: String
+  password: String!
+}
+
+type User {
+  _count: UserCount
+  civilite: String
+  createdAt: DateTime!
+  email: String!
+  firstname: String
+  id: Int!
+  lastname: String
+  password: String!
+  photo: String
+  updatedAt: DateTime!
+}
+
+type UserCount {
+  Post: Int!
+  comments: Int!
+  messages: Int!
 }

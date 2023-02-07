@@ -9,7 +9,15 @@ The javascript `Date` as string. Type represents date and time as the ISO Date s
 scalar DateTime
 
 type Mutation {
+  createPost(data: PostInput!, userId: Float!): String!
   signup(userInput: SignupInput!): String!
+}
+
+"""inputs for post"""
+input PostInput {
+  description: String!
+  image: String
+  title: String!
 }
 
 type Query {

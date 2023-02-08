@@ -18,7 +18,6 @@ export class UserResolver {
           groupes: true,
         },
       });
-      console.log(user);
       return user;
     } catch (error) {
       return new ApolloError("Une erreur s'est produite");

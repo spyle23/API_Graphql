@@ -36,18 +36,6 @@ export class DiscussGroupResolver {
             },
           },
         });
-        // await ctx.prisma.user.update({
-        //   where: {
-        //     id: user,
-        //   },
-        //   data: {
-        //     DiscussGroup: {
-        //       connect: {
-        //         id: group.id,
-        //       },
-        //     },
-        //   },
-        // });
       }
       return group;
     } catch (error) {

@@ -4,6 +4,7 @@ import {
   Mutation,
   PubSub,
   PubSubEngine,
+  Query,
   Resolver,
   Root,
   Subscription,
@@ -49,11 +50,37 @@ export class MessageResolver {
         await pubSub.publish("SEND_MESSAGE", {
           message: message,
         });
-        return "message envoyé"
+        return "message envoyé";
       }
     } catch (error) {
       console.log(error);
       return new ApolloError("une erreure s'est produite");
+    }
+  }
+
+  @Query(() => [Message])
+  async messageTwoUser(
+    @Arg("userId") userId: number,
+    @Arg("receiverId") receiverId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const messagesByUserId = await ctx.prisma.message.findMany({
+        where: {
+          userId: userId,
+          receiverId: receiverId,
+        },
+      });
+      const messageByReceiverId = await ctx.prisma.message.findMany({
+        where: {
+          userId: receiverId,
+          receiverId: userId,
+        },
+      });
+      return [...messageByReceiverId, ...messagesByUserId];
+    } catch (error) {
+      console.log(error);
+      return new ApolloError("une erreur s'est produite");
     }
   }
 }

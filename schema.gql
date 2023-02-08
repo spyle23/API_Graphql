@@ -52,6 +52,7 @@ input PostInput {
 }
 
 type Query {
+  messageTwoUser(receiverId: Float!, userId: Float!): [Message!]!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): User
 }

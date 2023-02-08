@@ -8,11 +8,32 @@ The javascript `Date` as string. Type represents date and time as the ISO Date s
 """
 scalar DateTime
 
+type DiscussGroup {
+  _count: DiscussGroupCount
+  coverPhoto: String
+  createdAt: DateTime!
+  groupName: String!
+  id: Int!
+  updatedAt: DateTime!
+}
+
+type DiscussGroupCount {
+  groupeMessages: Int!
+  members: Int!
+}
+
+"""user choose"""
+input DiscussGroupInput {
+  coverPhoto: String
+  groupName: String!
+}
+
 type Message {
   content: String!
   createdAt: DateTime!
+  discussGroupId: Int
   id: Int!
-  receiverId: Int!
+  receiverId: Int
   updatedAt: DateTime!
   userId: Int!
 }
@@ -20,12 +41,12 @@ type Message {
 """messgae inputs"""
 input MessageInput {
   content: String!
-  receiverId: Float!
 }
 
 type Mutation {
+  createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
   createPost(data: PostInput!, userId: Float!): String!
-  sendMessage(messageInput: MessageInput!, userId: Float!): String
+  sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): String!
   signup(userInput: SignupInput!): String!
 }
 
@@ -52,7 +73,7 @@ input PostInput {
 }
 
 type Query {
-  messageTwoUser(receiverId: Float!, userId: Float!): [Message!]!
+  messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): [Message!]!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): User
 }
@@ -83,8 +104,14 @@ type User {
   updatedAt: DateTime!
 }
 
+"""user id in the group discuss"""
+input UserChoose {
+  membresId: [Float!]!
+}
+
 type UserCount {
   Post: Int!
   comments: Int!
+  groupes: Int!
   messages: Int!
 }

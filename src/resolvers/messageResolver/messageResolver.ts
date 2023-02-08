@@ -21,29 +21,51 @@ export class MessageResolver {
     return payload;
   }
 
-  @Mutation(() => String, { nullable: true })
-  async sendMessage(
+  @Mutation(() => String)
+  async sendMessageDiscoussGroup(
     @Arg("messageInput") messageInput: MessageInput,
     @Arg("userId") userId: number,
-    @Ctx() ctx: Context,
-    @PubSub() pubSub: PubSubEngine
+    @Arg("receiverId", { nullable: true }) receiverId: number,
+    @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
+    @PubSub() pubSub: PubSubEngine,
+    @Ctx() ctx: Context
   ) {
     try {
-      const receiver = await ctx.prisma.user.findUnique({
-        where: {
-          id: messageInput.receiverId,
-        },
-      });
-      if (!receiver)
-        return new ApolloError("Le recepteur du message n'existe pas");
+      const dataMessage = receiverId
+        ? {
+            ...messageInput,
+            receiverId,
+            User: {
+              connect: {
+                id: userId,
+              },
+            },
+          }
+        : {
+            ...messageInput,
+            User: {
+              connect: {
+                id: userId,
+              },
+            },
+            DiscussGroup: {
+              connect: {
+                id: discussGroupId,
+              },
+            },
+          };
+      if (receiverId) {
+        const receiver = await ctx.prisma.user.findUnique({
+          where: {
+            id: receiverId,
+          },
+        });
+        if (!receiver)
+          return new ApolloError("Le recepteur du message n'existe pas");
+      }
       const message = await ctx.prisma.message.create({
         data: {
-          ...messageInput,
-          User: {
-            connect: {
-              id: userId,
-            },
-          },
+          ...dataMessage,
         },
       });
       if (message) {
@@ -53,31 +75,39 @@ export class MessageResolver {
         return "message envoyé";
       }
     } catch (error) {
-      console.log(error);
-      return new ApolloError("une erreure s'est produite");
+      return new ApolloError("Une erreur s'est produite");
     }
   }
 
   @Query(() => [Message])
   async messageTwoUser(
     @Arg("userId") userId: number,
-    @Arg("receiverId") receiverId: number,
+    @Arg("receiverId", { nullable: true }) receiverId: number,
+    @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
     @Ctx() ctx: Context
   ) {
     try {
-      const messagesByUserId = await ctx.prisma.message.findMany({
+      if (receiverId) {
+        const messagesByUserId = await ctx.prisma.message.findMany({
+          where: {
+            userId: userId,
+            receiverId: receiverId,
+          },
+        });
+        const messageByReceiverId = await ctx.prisma.message.findMany({
+          where: {
+            userId: receiverId,
+            receiverId: userId,
+          },
+        });
+        return [...messageByReceiverId, ...messagesByUserId];
+      }
+      const messagesGroup = await ctx.prisma.message.findMany({
         where: {
-          userId: userId,
-          receiverId: receiverId,
+          discussGroupId: discussGroupId,
         },
       });
-      const messageByReceiverId = await ctx.prisma.message.findMany({
-        where: {
-          userId: receiverId,
-          receiverId: userId,
-        },
-      });
-      return [...messageByReceiverId, ...messagesByUserId];
+      return messagesGroup;
     } catch (error) {
       console.log(error);
       return new ApolloError("une erreur s'est produite");

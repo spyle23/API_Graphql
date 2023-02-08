@@ -8,8 +8,24 @@ The javascript `Date` as string. Type represents date and time as the ISO Date s
 """
 scalar DateTime
 
+type Message {
+  content: String!
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+"""messgae inputs"""
+input MessageInput {
+  content: String!
+  receiverId: Float!
+}
+
 type Mutation {
   createPost(data: PostInput!, userId: Float!): String!
+  sendMessage(messageInput: MessageInput!, userId: Float!): String
   signup(userInput: SignupInput!): String!
 }
 
@@ -47,6 +63,10 @@ input SignupInput {
   firstname: String
   lastname: String
   password: String!
+}
+
+type Subscription {
+  messageToUser: Message!
 }
 
 type User {

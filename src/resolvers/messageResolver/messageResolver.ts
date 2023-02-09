@@ -11,8 +11,9 @@ import {
 } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
 import { Context } from "../../context";
-import { MessageInput } from "./type";
+import { MessageInput, MessageResponse } from "./type";
 import { ApolloError } from "apollo-server-express";
+import { ResponseForm } from "../../Types/ResponseForm";
 
 @Resolver(Message)
 export class MessageResolver {
@@ -79,7 +80,7 @@ export class MessageResolver {
     }
   }
 
-  @Query(() => [Message])
+  @Query(() => MessageResponse)
   async messageTwoUser(
     @Arg("userId") userId: number,
     @Arg("receiverId", { nullable: true }) receiverId: number,
@@ -100,14 +101,24 @@ export class MessageResolver {
             receiverId: userId,
           },
         });
-        return [...messageByReceiverId, ...messagesByUserId];
+        const response: MessageResponse = {
+          message: "voici les messages",
+          data: [...messageByReceiverId, ...messagesByUserId],
+          success: true,
+        };
+        return response;
       }
       const messagesGroup = await ctx.prisma.message.findMany({
         where: {
           discussGroupId: discussGroupId,
         },
       });
-      return messagesGroup;
+      const response: MessageResponse = {
+        message: "voici les messages du groupe",
+        data: messagesGroup,
+        success: true,
+      };
+      return response;
     } catch (error) {
       console.log(error);
       return new ApolloError("une erreur s'est produite");

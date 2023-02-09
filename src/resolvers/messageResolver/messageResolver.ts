@@ -14,12 +14,19 @@ import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../context";
 import { MessageInput, MessageResponse } from "./type";
 import { ApolloError } from "apollo-server-express";
+import { PrismaClient } from "@prisma/client";
 
 @Resolver(Message)
 export class MessageResolver {
   @Subscription({
     topics: "SEND_MESSAGE",
     filter: async ({ payload, args }) => {
+      const prisma = new PrismaClient();
+      const currentUser = await prisma.user.findUnique({
+        where: { id: args.userId },
+        include: { groupes: true },
+      });
+      console.log(currentUser);
       return payload.message.receiverId === args.userId;
     },
   })

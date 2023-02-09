@@ -26,7 +26,14 @@ export class MessageResolver {
         where: { id: args.userId },
         include: { groupes: true },
       });
-      console.log(currentUser);
+      if (payload.message.discussGroupId) {
+        return currentUser.groupes.find(
+          ({ discussGroupId }) =>
+            discussGroupId === payload.message.discussGroupId
+        )
+          ? true
+          : false;
+      }
       return payload.message.receiverId === args.userId;
     },
   })

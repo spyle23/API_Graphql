@@ -10,19 +10,27 @@ import {
   Subscription,
 } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
+import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../context";
 import { MessageInput, MessageResponse } from "./type";
 import { ApolloError } from "apollo-server-express";
-import { ResponseForm } from "../../Types/ResponseForm";
 
 @Resolver(Message)
 export class MessageResolver {
-  @Subscription({ topics: "SEND_MESSAGE" })
-  messageToUser(@Root("message") payload: Message): Message {
+  @Subscription({
+    topics: "SEND_MESSAGE",
+    filter: async ({ payload, args }) => {
+      return payload.message.receiverId === args.userId;
+    },
+  })
+  messageToUser(
+    @Root("message") payload: Message,
+    @Arg("userId") userId: number
+  ): Message {
     return payload;
   }
 
-  @Mutation(() => String)
+  @Mutation(() => MessageResponse)
   async sendMessageDiscoussGroup(
     @Arg("messageInput") messageInput: MessageInput,
     @Arg("userId") userId: number,
@@ -73,7 +81,10 @@ export class MessageResolver {
         await pubSub.publish("SEND_MESSAGE", {
           message: message,
         });
-        return "message envoyé";
+        return {
+          message: "message envoyé",
+          success: true,
+        } as MessageResponse;
       }
     } catch (error) {
       return new ApolloError("Une erreur s'est produite");

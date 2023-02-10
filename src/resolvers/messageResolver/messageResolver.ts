@@ -1,28 +1,31 @@
 import {
   Arg,
+  Authorized,
   Ctx,
   Mutation,
   PubSub,
   PubSubEngine,
   Query,
   Resolver,
+  ResolverFilterData,
   Root,
   Subscription,
 } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
-import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../context";
 import { MessageInput, MessageResponse } from "./type";
 import { ApolloError } from "apollo-server-express";
-import { PrismaClient } from "@prisma/client";
 
 @Resolver(Message)
 export class MessageResolver {
   @Subscription({
     topics: "SEND_MESSAGE",
-    filter: async ({ payload, args }) => {
-      const prisma = new PrismaClient();
-      const currentUser = await prisma.user.findUnique({
+    filter: async ({
+      payload,
+      args,
+      context,
+    }: ResolverFilterData<any, any, Context>) => {
+      const currentUser = await context.prisma.user.findUnique({
         where: { id: args.userId },
         include: { groupes: true },
       });
@@ -44,6 +47,7 @@ export class MessageResolver {
     return payload;
   }
 
+  @Authorized()
   @Mutation(() => MessageResponse)
   async sendMessageDiscoussGroup(
     @Arg("messageInput") messageInput: MessageInput,
@@ -104,7 +108,7 @@ export class MessageResolver {
       return new ApolloError("Une erreur s'est produite");
     }
   }
-
+  @Authorized()
   @Query(() => MessageResponse)
   async messageTwoUser(
     @Arg("userId") userId: number,

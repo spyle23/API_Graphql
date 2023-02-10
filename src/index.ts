@@ -10,7 +10,7 @@ import { ApolloServer } from "apollo-server-express";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
-import { PrismaClient } from "@prisma/client";
+import { customAuthChecker } from "./authChecker";
 
 require("dotenv").config();
 
@@ -21,7 +21,11 @@ const PORT = process.env.PORT || 4000;
   app.use(express.json({ limit: "50mb" }));
 
   const httpServer = createServer(app);
-  const schema = await tq.buildSchema({ resolvers, emitSchemaFile: true });
+  const schema = await tq.buildSchema({
+    resolvers,
+    authChecker: customAuthChecker,
+    emitSchemaFile: true,
+  });
   // create web socket server
   const wsServer = new WebSocketServer({
     server: httpServer,
@@ -32,6 +36,9 @@ const PORT = process.env.PORT || 4000;
     {
       schema,
       execute,
+      context: (_ctx) => {
+        return context;
+      },
       subscribe,
       //handle event onConnect if one client is connected
       onConnect: async (_ctx) => {
@@ -43,7 +50,7 @@ const PORT = process.env.PORT || 4000;
 
   const server = new ApolloServer({
     schema,
-    context: async ({ req }) => {
+    context: ({ req }) => {
       const token = req.headers.authorization;
       return {
         ...context,

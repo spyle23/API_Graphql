@@ -51,7 +51,8 @@ const PORT = process.env.PORT || 4000;
   const server = new ApolloServer({
     schema,
     context: ({ req }) => {
-      const token = req.headers.authorization;
+      const authorisation = req.headers.authorization;
+      const token = authorisation.split(" ")[1];
       return {
         ...context,
         token,

@@ -28,6 +28,13 @@ input DiscussGroupInput {
   groupName: String!
 }
 
+"""Login response with token"""
+type LoginResponseForm {
+  data: UserWithToken
+  message: String!
+  success: Boolean!
+}
+
 type Message {
   content: String!
   createdAt: DateTime!
@@ -53,6 +60,7 @@ type MessageResponse {
 type Mutation {
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
   createPost(data: PostInput!, userId: Float!): String!
+  login(email: String!, password: String!): LoginResponseForm!
   sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
   signup(userInput: SignupInput!): String!
 }
@@ -121,4 +129,19 @@ type UserCount {
   comments: Int!
   groupes: Int!
   messages: Int!
+}
+
+"""User with token"""
+type UserWithToken {
+  _count: UserCount
+  civilite: String
+  createdAt: DateTime!
+  email: String!
+  firstname: String
+  id: Int!
+  lastname: String
+  password: String!
+  photo: String
+  token: String!
+  updatedAt: DateTime!
 }

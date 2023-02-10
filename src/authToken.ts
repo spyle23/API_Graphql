@@ -11,7 +11,6 @@ export const authToken = {
       const user: any = jwt.verify(token, process.env.JWT_SECRET, {
         algorithms: ["HS256"],
       });
-      console.log(user);
       return await user?.user;
     } catch (error) {
       return null;

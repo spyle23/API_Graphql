@@ -1,6 +1,12 @@
 import { User } from "@generated/type-graphql/models/User";
 import { IsEmail } from "class-validator";
-import { Field, InputType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
+import { ResponseForm } from "../../../Types/ResponseForm";
+@ObjectType({ description: "User with token" })
+class UserWithToken extends User {
+  @Field()
+  token: string;
+}
 
 @InputType({ description: "user inputs" })
 export class SignupInput implements Partial<User> {
@@ -19,4 +25,15 @@ export class SignupInput implements Partial<User> {
 
   @Field({ nullable: true })
   civilite?: string;
+}
+@ObjectType({ description: "Login response with token" })
+export class LoginResponseForm extends ResponseForm<UserWithToken> {
+  @Field()
+  message: string;
+
+  @Field()
+  success: boolean;
+
+  @Field(() => UserWithToken, { nullable: true })
+  data?: UserWithToken;
 }

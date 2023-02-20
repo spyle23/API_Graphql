@@ -83,4 +83,64 @@ export class CommentResolver {
       return new ApolloError("une erreur s'est produite");
     }
   }
+
+  @Mutation(() => String)
+  async modifyComment(
+    @Arg("commendId") commentId: number,
+    @Arg("userId") userId: number,
+    @Arg("commentInput") commentInput: CommentInput,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const comment = await ctx.prisma.comment.findUnique({
+        where: {
+          id: commentId,
+        },
+      });
+      if (!comment) return new ApolloError("commentaire innexistant");
+      if (comment.userId === userId) {
+        await ctx.prisma.comment.update({
+          where: {
+            id: commentId,
+          },
+          data: {
+            ...commentInput,
+            updatedAt: new Date(),
+          },
+        });
+        return "Commentaire changé";
+      }
+      return new ApolloError(
+        "Vous n'avez pas le droit de changer le commentaire des autres"
+      );
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Mutation(() => String)
+  async deleteComment(
+    @Arg("userId") userId: number,
+    @Arg("commentId") commentId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const comment = await ctx.prisma.comment.findUnique({
+        where: {
+          id: commentId,
+        },
+      });
+      if (!comment) return new ApolloError("Commentaire innexistant");
+      if (comment.userId === userId) {
+        await ctx.prisma.comment.delete({
+          where: {
+            id: commentId,
+          },
+        });
+      }
+      return new ApolloError(
+        "Vous n'avez pas le droit de supprimer le commentaire des autres"
+      );
+    } catch (error) {}
+  }
 }

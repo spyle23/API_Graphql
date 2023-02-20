@@ -87,8 +87,10 @@ type Mutation {
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
   createPost(data: PostInput!, userId: Float!): String!
+  deleteComment(commentId: Float!, userId: Float!): String!
   deleteMessageById(messageId: Float!, userId: Float!): String!
   login(email: String!, password: String!): LoginResponseForm!
+  modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
   signup(userInput: SignupInput!): String!

@@ -45,6 +45,7 @@ model Comment {
     postId    Int
     User      User     @relation(fields: [userId], references: [id])
     image     String?  @db.Text
+    content   String
     userId    Int
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

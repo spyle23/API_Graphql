@@ -3,6 +3,32 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
+"""input for the comment"""
+input CommentInput {
+  content: String!
+  image: String
+}
+
+"""response type for comment"""
+type CommentResponse {
+  data: [CommentWithUser!]
+  message: String!
+  success: Boolean!
+}
+
+"""comment with user"""
+type CommentWithUser {
+  Post: Post!
+  User: User!
+  content: String!
+  createdAt: DateTime!
+  id: Int!
+  image: String
+  postId: Int!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
 """
 The javascript `Date` as string. Type represents date and time as the ISO Date string.
 """
@@ -58,6 +84,7 @@ type MessageResponse {
 }
 
 type Mutation {
+  createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
   createPost(data: PostInput!, userId: Float!): String!
   deleteMessageById(messageId: Float!, userId: Float!): String!
@@ -90,6 +117,8 @@ input PostInput {
 }
 
 type Query {
+  getCommentByPost(postId: Float!): CommentResponse!
+  getCommentByUser(userId: Float!): CommentResponse!
   messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): MessageResponse!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): User

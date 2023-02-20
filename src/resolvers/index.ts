@@ -1,4 +1,5 @@
 import { NonEmptyArray } from "type-graphql";
+import { CommentResolver } from "./commentResolver";
 import { DiscussGroupResolver } from "./discussGroup";
 import { MessageResolver } from "./messageResolver";
 import { PostResolver } from "./postResolver";
@@ -9,4 +10,5 @@ export default [
   PostResolver,
   MessageResolver,
   DiscussGroupResolver,
+  CommentResolver,
 ] as NonEmptyArray<Function> | NonEmptyArray<string>;

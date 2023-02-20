@@ -60,7 +60,9 @@ type MessageResponse {
 type Mutation {
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
   createPost(data: PostInput!, userId: Float!): String!
+  deleteMessageById(messageId: Float!, userId: Float!): String!
   login(email: String!, password: String!): LoginResponseForm!
+  modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
   signup(userInput: SignupInput!): String!
 }

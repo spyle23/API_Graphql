@@ -153,4 +153,70 @@ export class MessageResolver {
       return new ApolloError("une erreur s'est produite");
     }
   }
+
+  @Authorized()
+  @Mutation(() => String)
+  async deleteMessageById(
+    @Arg("messageId") messageId: number,
+    @Arg("userId") userId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const message = await ctx.prisma.message.findUnique({
+        where: {
+          id: messageId,
+        },
+      });
+      if (!message) return new ApolloError("message non existant");
+      if (message.userId === userId) {
+        await ctx.prisma.message.delete({
+          where: {
+            id: messageId,
+          },
+        });
+        return "message supprimé";
+      }
+      return new ApolloError(
+        "Vous n'avez pas le droit de supprimer le message des autres"
+      );
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async modifyMessage(
+    @Arg("messageId") messageId: number,
+    @Ctx() ctx: Context,
+    @Arg("newMessage") newMessage: string,
+    @Arg("userId") userId: number
+  ) {
+    try {
+      const message = await ctx.prisma.message.findUnique({
+        where: {
+          id: messageId,
+        },
+      });
+      if (!message) return new ApolloError("message non existant");
+      if (message.userId === userId) {
+        await ctx.prisma.message.update({
+          where: {
+            id: messageId,
+          },
+          data: {
+            content: newMessage,
+            updatedAt: new Date(),
+          },
+        });
+        return "message modifié";
+      }
+      return new ApolloError(
+        "Vous n'avez pas le droit de modifier le message des autres",
+        "403"
+      );
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
 }

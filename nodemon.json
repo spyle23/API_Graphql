@@ -2,5 +2,5 @@
   "verbose": false,
   "watch": ["./src"],
   "ext": "js,ts",
-  "exec": "SET NODE_ENV=developpement && ts-node-dev --respawn --transpile-only src/index.ts"
+  "exec": "SET NODE_ENV=developpement && ts-node-dev --no-notify --respawn --transpile-only src/index.ts"
 }

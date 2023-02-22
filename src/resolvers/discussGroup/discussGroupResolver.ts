@@ -1,9 +1,9 @@
-import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { DiscussGroup } from "@generated/type-graphql/models/DiscussGroup";
 import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../context";
 import { ApolloError } from "apollo-server-express";
-import { DiscussGroupInput, UserChoose } from "./type";
+import { DiscussGroupInput, UserChoose, UserWithGroup } from "./type";
 
 @Resolver(DiscussGroup)
 export class DiscussGroupResolver {
@@ -41,6 +41,32 @@ export class DiscussGroupResolver {
     } catch (error) {
       console.log(error);
       return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Query(() => [DiscussGroup])
+  async getAllGroupUser(@Arg("userId") userId: number, @Ctx() ctx: Context) {
+    try {
+      const user = await ctx.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+        include: {
+          groupes: true,
+        },
+      });
+      let userDiscussGroup: DiscussGroup[] = [];
+      for (let group of user?.groupes) {
+        const currentGroup = await ctx.prisma.discussGroup.findUnique({
+          where: {
+            id: group.discussGroupId,
+          },
+        });
+        userDiscussGroup.push(currentGroup);
+      }
+      return userDiscussGroup;
+    } catch (error) {
+      return new ApolloError("une erreur s'est produitef");
     }
   }
 }

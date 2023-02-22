@@ -119,6 +119,7 @@ input PostInput {
 }
 
 type Query {
+  getAllGroupUser(userId: Float!): [DiscussGroup!]!
   getCommentByPost(postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
   messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): MessageResponse!

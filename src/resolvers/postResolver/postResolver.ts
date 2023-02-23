@@ -1,4 +1,4 @@
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Post } from "@generated/type-graphql/models/Post";
 import { Context } from "../../context";
 import { PostInput } from "./type";
@@ -7,6 +7,7 @@ import { ApolloError } from "apollo-server-express";
 @Resolver(Post)
 export class PostResolver {
 
+  @Authorized()
   @Query(()=>[Post])
   async postByUser(@Arg("userId") userId: number, @Ctx() ctx: Context){
     try {
@@ -21,6 +22,7 @@ export class PostResolver {
     }
   }
 
+  @Authorized()
   @Mutation(() => String)
   async createPost(
     @Arg("data") data: PostInput,

@@ -44,7 +44,7 @@ export class UserResolver {
       });
       const token = authToken.sign(newUser);
       const response: LoginResponseForm = {
-        message: "Vous êtes authentifié",
+        message: "Vous êtes inscris",
         success: true,
         data: {
           ...newUser,

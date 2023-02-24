@@ -31,7 +31,6 @@ model Post {
     id          Int       @id @default(autoincrement())
     userId      Int
     user        User      @relation(fields: [userId], references: [id])
-    title       String
     description String
     image       String?   @db.Text
     comments    Comment[]

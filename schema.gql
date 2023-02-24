@@ -102,7 +102,6 @@ type Post {
   description: String!
   id: Int!
   image: String
-  title: String!
   updatedAt: DateTime!
   userId: Int!
 }
@@ -115,7 +114,6 @@ type PostCount {
 input PostInput {
   description: String!
   image: String
-  title: String!
 }
 
 type Query {

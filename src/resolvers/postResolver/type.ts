@@ -4,10 +4,6 @@ import { Field, InputType } from "type-graphql";
 
 @InputType({ description: "inputs for post" })
 export class PostInput implements Partial<Post> {
-  @Field()
-  @IsString()
-  @MaxLength(30)
-  title: string;
 
   @Field()
   @IsString()

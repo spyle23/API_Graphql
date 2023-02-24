@@ -93,7 +93,7 @@ type Mutation {
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
-  signup(userInput: SignupInput!): String!
+  signup(userInput: SignupInput!): LoginResponseForm!
 }
 
 type Post {

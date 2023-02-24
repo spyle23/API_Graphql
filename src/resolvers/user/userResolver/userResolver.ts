@@ -23,7 +23,7 @@ export class UserResolver {
     }
   }
 
-  @Mutation(() => String)
+  @Mutation(() => LoginResponseForm)
   async signup(@Arg("userInput") userInput: SignupInput, @Ctx() ctx: Context) {
     try {
       const { email, password } = userInput;
@@ -36,13 +36,22 @@ export class UserResolver {
         return new ApolloError("L'email que vous avez entrer est déjà pris");
       }
       const hashpasswd = Bcrypt.hashSync(password, 10);
-      await ctx.prisma.user.create({
+      const newUser = await ctx.prisma.user.create({
         data: {
           ...userInput,
           password: hashpasswd,
         },
       });
-      return "Vous êtes inscris";
+      const token = authToken.sign(newUser);
+      const response: LoginResponseForm = {
+        message: "Vous êtes authentifié",
+        success: true,
+        data: {
+          ...newUser,
+          token,
+        },
+      };
+      return response;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

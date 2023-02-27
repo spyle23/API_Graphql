@@ -32,7 +32,6 @@ export class PostResolver {
     try {
       const { image } = data
       const path = await uploadFile(image);
-      console.log(path)
       await ctx.prisma.post.create({
         data: {
           ...data,

@@ -10,14 +10,15 @@ export const uploadFile = (body: string): Promise<string> => {
       .replace(/^data:video\/\w+;base64,/, ""),
     "base64"
   );
-  const filePath = `./uploads/images/${uniqueKey}.png`;
+  const filePath = `/uploads/images/${uniqueKey}.png`;
+  const absolutePath = __dirname + filePath;
   return new Promise<string>((resolve, reject) => {
-    fs.writeFile(filePath, buffer, "base64", (err) => {
+    fs.writeFile(absolutePath, buffer, "base64", (err) => {
       if (err) {
-        console.log(err);
+        console.log("err: ", err);
         reject(err);
       } else {
-        resolve(filePath);
+        resolve(absolutePath);
       }
     });
   });

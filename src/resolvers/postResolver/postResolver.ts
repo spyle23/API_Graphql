@@ -3,22 +3,22 @@ import { Post } from "@generated/type-graphql/models/Post";
 import { Context } from "../../context";
 import { PostInput } from "./type";
 import { ApolloError } from "apollo-server-express";
+import { uploadFile } from "../../upload";
 
 @Resolver(Post)
 export class PostResolver {
-
   @Authorized()
-  @Query(()=>[Post])
-  async postByUser(@Arg("userId") userId: number, @Ctx() ctx: Context){
+  @Query(() => [Post])
+  async postByUser(@Arg("userId") userId: number, @Ctx() ctx: Context) {
     try {
       const posts = await ctx.prisma.post.findMany({
         where: {
-          userId: userId
-        }
+          userId: userId,
+        },
       });
-      return posts
+      return posts;
     } catch (error) {
-      return new ApolloError("une erreur s'est produite")
+      return new ApolloError("une erreur s'est produite");
     }
   }
 
@@ -30,9 +30,13 @@ export class PostResolver {
     @Ctx() ctx: Context
   ) {
     try {
+      const { image } = data
+      const path = await uploadFile(image);
+      console.log(path)
       await ctx.prisma.post.create({
         data: {
           ...data,
+          image: path,
           user: {
             connect: {
               id: userId,
@@ -40,9 +44,9 @@ export class PostResolver {
           },
         },
       });
-      return "post crée"
+      return "post crée";
     } catch (error) {
-      return new ApolloError("post non")
+      return new ApolloError("post non");
     }
   }
 }

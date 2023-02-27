@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 4000;
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: "50mb" }));
-  app.use(express.static(__dirname + "/uploads/images"))
+  app.use("/images" ,express.static(__dirname + "/uploads/images"))
 
   const httpServer = createServer(app);
   const schema = await tq.buildSchema({

@@ -30,12 +30,9 @@ export class PostResolver {
     @Ctx() ctx: Context
   ) {
     try {
-      const { image } = data
-      const path = await uploadFile(image);
       await ctx.prisma.post.create({
         data: {
           ...data,
-          image: path,
           user: {
             connect: {
               id: userId,

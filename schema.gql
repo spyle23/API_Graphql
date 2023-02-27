@@ -88,12 +88,14 @@ type Mutation {
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
   createPost(data: PostInput!, userId: Float!): String!
   deleteComment(commentId: Float!, userId: Float!): String!
+  deleteFile(url: String!): String!
   deleteMessageById(messageId: Float!, userId: Float!): String!
   login(email: String!, password: String!): LoginResponseForm!
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
   signup(userInput: SignupInput!): LoginResponseForm!
+  upload(data: UploadInput!): String!
 }
 
 type Post {
@@ -136,6 +138,13 @@ input SignupInput {
 
 type Subscription {
   messageToUser(userId: Float!): Message!
+}
+
+"""input for the file"""
+input UploadInput {
+  data: String!
+  name: String!
+  type: String!
 }
 
 type User {

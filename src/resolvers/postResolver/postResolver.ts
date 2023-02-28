@@ -1,7 +1,7 @@
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Post } from "@generated/type-graphql/models/Post";
 import { Context } from "../../context";
-import { PostInput } from "./type";
+import { PostDisplay, PostInput } from "./type";
 import { ApolloError } from "apollo-server-express";
 import { uploadFile } from "../../upload";
 
@@ -17,6 +17,25 @@ export class PostResolver {
         },
       });
       return posts;
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Query(() => [PostDisplay])
+  async getOrderPost(@Ctx() ctx: Context) {
+    try {
+      const post = await ctx.prisma.post.findMany({
+        orderBy: {
+          updatedAt: "asc",
+        },
+        include: {
+          comments: true,
+          user: true,
+        },
+      });
+      return post;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

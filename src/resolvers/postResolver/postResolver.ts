@@ -3,7 +3,6 @@ import { Post } from "@generated/type-graphql/models/Post";
 import { Context } from "../../context";
 import { PostDisplay, PostInput } from "./type";
 import { ApolloError } from "apollo-server-express";
-import { uploadFile } from "../../upload";
 
 @Resolver(Post)
 export class PostResolver {
@@ -28,7 +27,7 @@ export class PostResolver {
     try {
       const post = await ctx.prisma.post.findMany({
         orderBy: {
-          updatedAt: "asc",
+          updatedAt: "desc",
         },
         include: {
           comments: true,

@@ -1,5 +1,19 @@
-import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Args,
+  Authorized,
+  Ctx,
+  Mutation,
+  PubSub,
+  PubSubEngine,
+  Query,
+  Resolver,
+  ResolverFilterData,
+  Root,
+  Subscription,
+} from "type-graphql";
 import { Comment } from "@generated/type-graphql/models/Comment";
+import { Notification } from "@generated/type-graphql/models/Notification";
 import { CommentInput, CommentResponse } from "./type";
 import { Context } from "../../context";
 import { ApolloError } from "apollo-server-express";
@@ -60,10 +74,11 @@ export class CommentResolver {
     @Arg("userId") userId: number,
     @Arg("postId") postId: number,
     @Arg("commentInput") commentInput: CommentInput,
-    @Ctx() ctx: Context
+    @Ctx() ctx: Context,
+    @PubSub() pubsub: PubSubEngine
   ) {
     try {
-      await ctx.prisma.comment.create({
+      const newComment = await ctx.prisma.comment.create({
         data: {
           ...commentInput,
           User: {
@@ -78,6 +93,28 @@ export class CommentResolver {
           },
         },
       });
+      const user = await ctx.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+      const post = await ctx.prisma.post.findUnique({
+        where: {
+          id: postId,
+        },
+      });
+      const notification = await ctx.prisma.notification.create({
+        data: {
+          name: "nouveau commentaire",
+          description: `L'utilisateur ${user.firstname} ${user.lastname} a commenté votre publication`,
+          User: {
+            connect: {
+              id: post.userId,
+            },
+          },
+        },
+      });
+      await pubsub.publish("COMMENT_POST", notification);
       return "commentaire crée";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
@@ -142,5 +179,22 @@ export class CommentResolver {
         "Vous n'avez pas le droit de supprimer le commentaire des autres"
       );
     } catch (error) {}
+  }
+
+  @Subscription({
+    topics: "COMMENT_POST",
+    filter: async ({
+      payload,
+      args,
+      context,
+    }: ResolverFilterData<Notification, any, Context>) => {
+      return payload.userId === args.userId;
+    },
+  })
+  commentPost(
+    @Root() payload: Notification,
+    @Arg("userId") userId: number
+  ): Notification {
+    return payload;
   }
 }

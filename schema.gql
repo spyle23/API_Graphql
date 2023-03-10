@@ -108,6 +108,15 @@ type Mutation {
   upload(data: UploadInput!): String!
 }
 
+type Notification {
+  createdAt: DateTime!
+  description: String!
+  id: Int!
+  name: String!
+  updatedAt: DateTime!
+  userId: Int
+}
+
 type Post {
   _count: PostCount
   createdAt: DateTime!
@@ -161,6 +170,7 @@ input SignupInput {
 }
 
 type Subscription {
+  commentPost(userId: Float!): Notification!
   messageToUser(userId: Float!): Message!
 }
 
@@ -194,6 +204,7 @@ type UserCount {
   comments: Int!
   groupes: Int!
   messages: Int!
+  notifications: Int!
 }
 
 """User with token"""

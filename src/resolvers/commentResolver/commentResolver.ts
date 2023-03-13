@@ -115,7 +115,7 @@ export class CommentResolver {
             },
           },
         });
-        await pubsub.publish("COMMENT_POST", notification);
+        await pubsub.publish("NOTIFICATION", notification);
       }
       return "commentaire crée";
     } catch (error) {
@@ -184,7 +184,7 @@ export class CommentResolver {
   }
 
   @Subscription({
-    topics: "COMMENT_POST",
+    topics: "NOTIFICATION",
     filter: async ({
       payload,
       args,

@@ -11,6 +11,14 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum ReactionType {
+    LIKE
+    LOVE
+    WOAHOU
+    HAHA
+    GRR
+}
+
 model User {
     id            Int                  @id @default(autoincrement())
     email         String               @unique
@@ -25,18 +33,31 @@ model User {
     comments      Comment[]
     messages      Message[]
     groupes       UserOnDiscussGroup[]
+    reactions     Reaction[]
     notifications Notification[]
 }
 
 model Post {
-    id          Int       @id @default(autoincrement())
+    id          Int        @id @default(autoincrement())
     userId      Int
-    user        User      @relation(fields: [userId], references: [id])
+    user        User       @relation(fields: [userId], references: [id])
     description String
-    image       String?   @db.Text
+    image       String?    @db.Text
+    reactions   Reaction[]
     comments    Comment[]
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+}
+
+model Reaction {
+    id           Int          @id @default(autoincrement())
+    reactionType ReactionType
+    createdAt    DateTime     @default(now())
+    updatedAt    DateTime     @updatedAt
+    Post         Post         @relation(fields: [postId], references: [id])
+    postId       Int
+    User         User        @relation(fields: [userId], references: [id])
+    userId       Int
 }
 
 model Comment {
@@ -70,7 +91,7 @@ model DiscussGroup {
     members        UserOnDiscussGroup[]
     groupeMessages Message[]
     createdAt      DateTime             @default(now())
-    updatedAt      DateTime             @updatedAt()
+    updatedAt      DateTime             @updatedAt
 }
 
 model UserOnDiscussGroup {
@@ -79,7 +100,7 @@ model UserOnDiscussGroup {
     DiscussGroup   DiscussGroup @relation(fields: [discussGroupId], references: [id])
     discussGroupId Int
     createdAt      DateTime     @default(now())
-    updatedAt      DateTime     @updatedAt()
+    updatedAt      DateTime     @updatedAt
 
     @@id([userId, discussGroupId])
 }
@@ -89,7 +110,7 @@ model Notification {
     name        String
     description String
     createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt()
+    updatedAt   DateTime @updatedAt
     User        User?    @relation(fields: [userId], references: [id])
     userId      Int?
 }

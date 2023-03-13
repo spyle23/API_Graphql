@@ -47,3 +47,25 @@ export class UserDetails extends User {
   @Field(() => [Notification])
   notifications?: Notification[];
 }
+
+@InputType({ description: "input for update user" })
+export class UpdateUserInput implements Partial<User> {
+  @Field()
+  @IsEmail()
+  email: string;
+
+  @Field({ nullable: true })
+  firstname?: string;
+
+  @Field({ nullable: true })
+  lastname?: string;
+
+  @Field()
+  password: string;
+
+  @Field({ nullable: true })
+  civilite?: string;
+
+  @Field({ nullable: true })
+  photo?: string;
+}

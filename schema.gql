@@ -94,6 +94,7 @@ type MessageResponse {
 }
 
 type Mutation {
+  addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
   createPost(data: PostInput!, userId: Float!): String!
@@ -105,6 +106,7 @@ type Mutation {
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
   signup(userInput: SignupInput!): LoginResponseForm!
+  updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
   upload(data: UploadInput!): String!
 }
 
@@ -129,6 +131,7 @@ type Post {
 
 type PostCount {
   comments: Int!
+  reactions: Int!
 }
 
 """Form of post to display"""
@@ -160,6 +163,19 @@ type Query {
   profile(userId: Float!): UserDetails
 }
 
+"""input of the reaction"""
+input ReactionInput {
+  reactionType: ReactionType!
+}
+
+enum ReactionType {
+  GRR
+  HAHA
+  LIKE
+  LOVE
+  WOAHOU
+}
+
 """user inputs"""
 input SignupInput {
   civilite: String
@@ -172,6 +188,16 @@ input SignupInput {
 type Subscription {
   commentPost(userId: Float!): Notification!
   messageToUser(userId: Float!): Message!
+}
+
+"""input for update user"""
+input UpdateUserInput {
+  civilite: String
+  email: String!
+  firstname: String
+  lastname: String
+  password: String!
+  photo: String
 }
 
 """input for the file"""
@@ -205,6 +231,7 @@ type UserCount {
   groupes: Int!
   messages: Int!
   notifications: Int!
+  reactions: Int!
 }
 
 """details of user"""

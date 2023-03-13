@@ -3,7 +3,12 @@ import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../../context";
 import { ApolloError } from "apollo-server-express";
 import Bcrypt from "bcryptjs";
-import { LoginResponseForm, SignupInput, UserDetails } from "./type";
+import {
+  LoginResponseForm,
+  SignupInput,
+  UpdateUserInput,
+  UserDetails,
+} from "./type";
 import { authToken } from "../../../authToken";
 
 @Resolver(User)
@@ -96,6 +101,25 @@ export class UserResolver {
         },
       };
       return response;
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Mutation(() => String)
+  async updateUser(
+    @Arg("userId") userId: number,
+    @Arg("updateUserInput") updateUserInput: UpdateUserInput,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      await ctx.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: updateUserInput,
+      });
+      return "Information mis à jour";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

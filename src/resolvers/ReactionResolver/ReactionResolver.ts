@@ -61,7 +61,7 @@ export class ReactionResolver {
       if (post.userId !== userId) {
         const user = await ctx.prisma.user.findUnique({
           where: {
-            id: post.userId,
+            id: userId,
           },
         });
         const notification = await ctx.prisma.notification.create({

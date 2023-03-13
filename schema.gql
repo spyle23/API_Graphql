@@ -142,6 +142,7 @@ type PostDisplay {
   description: String!
   id: Int!
   image: String
+  reactions: [Reaction!]
   updatedAt: DateTime!
   user: User!
   userId: Int!
@@ -161,6 +162,15 @@ type Query {
   messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): MessageResponse!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): UserDetails
+}
+
+type Reaction {
+  createdAt: DateTime!
+  id: Int!
+  postId: Int!
+  reactionType: ReactionType!
+  updatedAt: DateTime!
+  userId: Int!
 }
 
 """input of the reaction"""

@@ -32,6 +32,7 @@ export class PostResolver {
         include: {
           comments: true,
           user: true,
+          reactions: true,
         },
       });
       return post;

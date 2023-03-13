@@ -5,7 +5,7 @@ import { IsString } from "class-validator";
 
 @InputType({ description: "input of the reaction" })
 export class ReactionInput implements Partial<Reaction> {
-  @Field(() => ReactionType)
   @IsString()
+  @Field(() => ReactionType)
   reactionType: ReactionType;
 }

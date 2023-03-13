@@ -1,4 +1,4 @@
-import { Comment, User } from "@generated/type-graphql/models";
+import { Comment, Reaction, User } from "@generated/type-graphql/models";
 import { Post } from "@generated/type-graphql/models/Post";
 import { IsString, Length } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
@@ -21,4 +21,7 @@ export class PostDisplay extends Post {
 
   @Field(() => [Comment], { nullable: true })
   comments?: Comment[];
+
+  @Field(() => [Reaction], { nullable: true })
+  reactions?: Reaction[];
 }

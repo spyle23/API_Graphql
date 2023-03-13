@@ -3,18 +3,22 @@ import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../../context";
 import { ApolloError } from "apollo-server-express";
 import Bcrypt from "bcryptjs";
-import { LoginResponseForm, SignupInput } from "./type";
+import { LoginResponseForm, SignupInput, UserDetails } from "./type";
 import { authToken } from "../../../authToken";
 
 @Resolver(User)
 export class UserResolver {
   @Authorized()
-  @Query(() => User, { nullable: true })
+  @Query(() => UserDetails, { nullable: true })
   async profile(@Arg("userId") userId: number, @Ctx() ctx: Context) {
     try {
       const user = await ctx.prisma.user.findUnique({
         where: {
           id: userId,
+        },
+        include: {
+          Post: true,
+          notifications: true,
         },
       });
       return user;

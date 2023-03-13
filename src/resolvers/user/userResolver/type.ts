@@ -1,3 +1,4 @@
+import { Notification, Post } from "@generated/type-graphql/models";
 import { User } from "@generated/type-graphql/models/User";
 import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
@@ -36,4 +37,13 @@ export class LoginResponseForm extends ResponseForm<UserWithToken> {
 
   @Field(() => UserWithToken, { nullable: true })
   data?: UserWithToken;
+}
+
+@ObjectType({ description: "details of user" })
+export class UserDetails extends User {
+  @Field(() => [Post])
+  Post?: Post[];
+
+  @Field(() => [Notification])
+  notifications?: Notification[];
 }

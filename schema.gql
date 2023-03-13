@@ -157,7 +157,7 @@ type Query {
   getOrderPost: [PostDisplay!]!
   messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): MessageResponse!
   postByUser(userId: Float!): [Post!]!
-  profile(userId: Float!): User
+  profile(userId: Float!): UserDetails
 }
 
 """user inputs"""
@@ -205,6 +205,22 @@ type UserCount {
   groupes: Int!
   messages: Int!
   notifications: Int!
+}
+
+"""details of user"""
+type UserDetails {
+  Post: [Post!]!
+  _count: UserCount
+  civilite: String
+  createdAt: DateTime!
+  email: String!
+  firstname: String
+  id: Int!
+  lastname: String
+  notifications: [Notification!]!
+  password: String!
+  photo: String
+  updatedAt: DateTime!
 }
 
 """User with token"""

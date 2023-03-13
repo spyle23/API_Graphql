@@ -93,28 +93,30 @@ export class CommentResolver {
           },
         },
       });
-      const user = await ctx.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
-      });
       const post = await ctx.prisma.post.findUnique({
         where: {
           id: postId,
         },
       });
-      const notification = await ctx.prisma.notification.create({
-        data: {
-          name: "nouveau commentaire",
-          description: `L'utilisateur ${user.firstname} ${user.lastname} a commenté votre publication`,
-          User: {
-            connect: {
-              id: post.userId,
+      if (post.userId !== userId) {
+        const user = await ctx.prisma.user.findUnique({
+          where: {
+            id: userId,
+          },
+        });
+        const notification = await ctx.prisma.notification.create({
+          data: {
+            name: "nouveau commentaire",
+            description: `L'utilisateur ${user.firstname} ${user.lastname} a commenté votre publication`,
+            User: {
+              connect: {
+                id: post.userId,
+              },
             },
           },
-        },
-      });
-      await pubsub.publish("COMMENT_POST", notification);
+        });
+        await pubsub.publish("COMMENT_POST", notification);
+      }
       return "commentaire crée";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");

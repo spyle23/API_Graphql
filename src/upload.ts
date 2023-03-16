@@ -1,6 +1,5 @@
 import { v4 as uuid } from "uuid";
 import fs from "fs";
-import { exec } from "child_process";
 
 enum TypeFile {
   IMAGE = "image",
@@ -51,7 +50,6 @@ export const deleteFile = (url: string): Promise<boolean> => {
   const file = arrayString[arrayString.length - 1];
   const type = arrayString[arrayString.length - 2];
   return new Promise<boolean>((resolve, reject) => {
-    exec("ls")
     fs.unlink(`./src/uploads/${type}/${file}`, (err) => {
       if (err) {
         console.log("err: ", err);

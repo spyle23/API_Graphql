@@ -3,7 +3,6 @@ FROM node:16-alpine
 WORKDIR /spyle23Graphql
 
 COPY package.json /spyle23Graphql/package.json
-COPY ./src/upload /spyle23Graphql/
 
 COPY package.json yarn.lock ./
 COPY tsconfig.json ./

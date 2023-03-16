@@ -8,6 +8,7 @@ COPY package.json yarn.lock ./
 COPY tsconfig.json ./
 COPY prisma ./
 RUN yarn --exact
+RUN yarn db:migrate
 RUN yarn types:generate
 
 COPY ["package.json", "./"]

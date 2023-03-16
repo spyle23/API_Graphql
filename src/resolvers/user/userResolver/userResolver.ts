@@ -102,7 +102,7 @@ export class UserResolver {
       };
       return response;
     } catch (error) {
-      return new ApolloError("une erreur s'est produite");
+      return new ApolloError(JSON.stringify(error));
     }
   }
 

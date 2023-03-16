@@ -7,6 +7,7 @@ import { PostResolver } from "./postResolver";
 import { ReactionResolver } from "./ReactionResolver";
 import { UserResolver } from "./user/userResolver/userResolver";
 
+//test
 export default [
   UserResolver,
   PostResolver,

@@ -1,5 +1,6 @@
 import { v4 as uuid } from "uuid";
 import fs from "fs";
+import { exec } from "child_process";
 
 enum TypeFile {
   IMAGE = "image",
@@ -33,6 +34,7 @@ export const uploadFile = ({ key, body, type }: FileType): Promise<string> => {
   );
   const filePath = `./src/uploads/${fileType}/${uniqueKey}.${type}`;
   return new Promise<string>((resolve, reject) => {
+    
     fs.writeFile(filePath, buffer, "base64", (err) => {
       if (err) {
         console.log("err: ", err);
@@ -49,6 +51,7 @@ export const deleteFile = (url: string): Promise<boolean> => {
   const file = arrayString[arrayString.length - 1];
   const type = arrayString[arrayString.length - 2];
   return new Promise<boolean>((resolve, reject) => {
+    exec("ls")
     fs.unlink(`./src/uploads/${type}/${file}`, (err) => {
       if (err) {
         console.log("err: ", err);

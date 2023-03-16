@@ -6,6 +6,7 @@ COPY package.json /spyle23Graphql/package.json
 
 COPY package.json yarn.lock ./
 COPY tsconfig.json ./
+COPY .env ./
 COPY prisma ./
 RUN yarn --exact
 RUN yarn types:generate

@@ -39,6 +39,7 @@ export const uploadFile = ({ key, body, type }: FileType): Promise<string> => {
         console.log("err: ", err);
         reject(err);
       } else {
+        console.log(`${basePathUpload}/${uniqueKey}.${type}`)
         resolve(`${basePathUpload}/${uniqueKey}.${type}`);
       }
     });

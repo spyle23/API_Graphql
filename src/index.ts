@@ -11,13 +11,11 @@ import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { customAuthChecker } from "./authChecker";
-import { exec } from "child_process";
 
 require("dotenv").config();
 
 const PORT = process.env.PORT || 4000;
 (async () => {
-  exec("ls")
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: "50mb" }));

@@ -102,6 +102,7 @@ export class UserResolver {
       };
       return response;
     } catch (error) {
+      console.log(error);
       return new ApolloError(JSON.stringify(error));
     }
   }

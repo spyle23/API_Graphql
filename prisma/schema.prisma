@@ -20,21 +20,22 @@ enum ReactionType {
 }
 
 model User {
-    id            Int                  @id @default(autoincrement())
-    email         String               @unique
-    firstname     String?
-    lastname      String?
-    password      String
-    photo         String?              @db.Text
-    civilite      String?
-    createdAt     DateTime             @default(now())
-    updatedAt     DateTime             @updatedAt
-    Post          Post[]
-    comments      Comment[]
-    messages      Message[]
-    groupes       UserOnDiscussGroup[]
-    reactions     Reaction[]
-    notifications Notification[]
+    id              Int                  @id @default(autoincrement())
+    email           String               @unique
+    firstname       String?
+    lastname        String?
+    password        String
+    photo           String?              @db.Text
+    civilite        String?
+    createdAt       DateTime             @default(now())
+    updatedAt       DateTime             @updatedAt
+    Post            Post[]
+    comments        Comment[]
+    messages        Message[]            @relation(name: "sender")
+    receiverMessage Message[]            @relation(name: "receiver")
+    groupes         UserOnDiscussGroup[]
+    reactions       Reaction[]
+    notifications   Notification[]
 }
 
 model Post {
@@ -56,7 +57,7 @@ model Reaction {
     updatedAt    DateTime     @updatedAt
     Post         Post         @relation(fields: [postId], references: [id])
     postId       Int
-    User         User        @relation(fields: [userId], references: [id])
+    User         User         @relation(fields: [userId], references: [id])
     userId       Int
 }
 
@@ -74,9 +75,10 @@ model Comment {
 
 model Message {
     id             Int           @id @default(autoincrement())
-    User           User          @relation(fields: [userId], references: [id])
+    User           User          @relation(name: "sender", fields: [userId], references: [id])
     userId         Int
-    receiverId     Int?
+    Receiver       User          @relation(name: "receiver", fields: [receiverId], references: [id])
+    receiverId     Int
     content        String
     createdAt      DateTime      @default(now())
     updatedAt      DateTime      @updatedAt

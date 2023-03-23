@@ -81,22 +81,32 @@ export class MessageResolver {
               },
             },
           };
-      if (receiverId) {
-        const receiver = await ctx.prisma.user.findUnique({
+        const receiver = receiverId ? await ctx.prisma.user.findUnique({
           where: {
             id: receiverId,
           },
-        });
+          include: {
+            messages: true,
+          },
+        }) : null;
         if (!receiver)
           return new ApolloError("Le recepteur du message n'existe pas");
-      }
-      const message = await ctx.prisma.message.create({
-        data: {
-          ...dataMessage,
-        },
-      });
-      if (message) {
-        await pubSub.publish("SEND_MESSAGE", {
+        const message = await ctx.prisma.message.create({
+          data: dataMessage,
+        });
+        if (message) {
+          const receiverUpdate = await ctx.prisma.user.update({
+            where: {
+              id: receiverId,
+            },
+            data: {
+              ...receiver,
+              messages: {
+                create: [...receiver.messages, message]
+              }
+            },
+          });
+          await pubSub.publish("SEND_MESSAGE", {
           message: message,
         });
         return {
@@ -105,6 +115,7 @@ export class MessageResolver {
         } as MessageResponse;
       }
     } catch (error) {
+      console.log(error);
       return new ApolloError("Une erreur s'est produite");
     }
   }

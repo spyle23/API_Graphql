@@ -93,6 +93,19 @@ type MessageResponse {
   success: Boolean!
 }
 
+"""message type with receiver and groupe"""
+type MessageWithRecepter {
+  DiscussGroup: DiscussGroup
+  Receiver: User
+  content: String!
+  createdAt: DateTime!
+  discussGroupId: Int
+  id: Int!
+  receiverId: Int
+  updatedAt: DateTime!
+  userId: Int!
+}
+
 type Mutation {
   addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
@@ -160,6 +173,7 @@ type Query {
   getCommentByUser(userId: Float!): CommentResponse!
   getOrderPost: [PostDisplay!]!
   messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): MessageResponse!
+  messagesOfCurrentUser(userId: Float!): [MessageWithRecepter!]!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): UserDetails
 }
@@ -242,6 +256,7 @@ type UserCount {
   messages: Int!
   notifications: Int!
   reactions: Int!
+  receiverMessage: Int!
 }
 
 """details of user"""

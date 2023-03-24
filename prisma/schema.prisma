@@ -77,7 +77,7 @@ model Message {
     id             Int           @id @default(autoincrement())
     User           User          @relation(name: "sender", fields: [userId], references: [id])
     userId         Int
-    Receiver       User?          @relation(name: "receiver", fields: [receiverId], references: [id])
+    Receiver       User?         @relation(name: "receiver", fields: [receiverId], references: [id])
     receiverId     Int?
     content        String
     createdAt      DateTime      @default(now())

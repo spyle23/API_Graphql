@@ -13,7 +13,7 @@ import {
 } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
 import { Context } from "../../context";
-import { MessageInput, MessageResponse } from "./type";
+import { MessageInput, MessageResponse, MessageWithRecepter } from "./type";
 import { ApolloError } from "apollo-server-express";
 
 @Resolver(Message)
@@ -45,6 +45,29 @@ export class MessageResolver {
     @Arg("userId") userId: number
   ): Message {
     return payload;
+  }
+
+  @Authorized()
+  @Query(() => [MessageWithRecepter])
+  async messagesOfCurrentUser(
+    @Arg("userId") userId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const messages = await ctx.prisma.message.findMany({
+        where: {
+          userId: userId,
+        },
+        include: {
+          Receiver: true,
+          DiscussGroup: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      return messages;
+    } catch (error) {}
   }
 
   @Authorized()

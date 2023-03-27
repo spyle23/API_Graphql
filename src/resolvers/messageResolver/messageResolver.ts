@@ -41,9 +41,9 @@ export class MessageResolver {
     },
   })
   messageToUser(
-    @Root("message") payload: Message,
+    @Root("message") payload: MessageWithRecepter,
     @Arg("userId") userId: number
-  ): Message {
+  ): MessageWithRecepter {
     return payload;
   }
 
@@ -66,7 +66,12 @@ export class MessageResolver {
           createdAt: "desc",
         },
       });
-      return messages;
+      const absoluteValue = Array.from(
+        new Set(messages.map((obj) => obj.receiverId))
+      ).map((receiverId) => {
+        return messages.find((obj) => obj.receiverId === receiverId);
+      });
+      return absoluteValue;
     } catch (error) {}
   }
 
@@ -119,6 +124,10 @@ export class MessageResolver {
         return new ApolloError("Le recepteur du message n'existe pas");
       const message = await ctx.prisma.message.create({
         data: dataMessage,
+        include: {
+          Receiver: true,
+          DiscussGroup: true
+        }
       });
       if (message) {
         await pubSub.publish("SEND_MESSAGE", {

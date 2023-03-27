@@ -211,7 +211,7 @@ input SignupInput {
 
 type Subscription {
   commentPost(userId: Float!): Notification!
-  messageToUser(userId: Float!): Message!
+  messageToUser(userId: Float!): MessageWithRecepter!
 }
 
 """input for update user"""

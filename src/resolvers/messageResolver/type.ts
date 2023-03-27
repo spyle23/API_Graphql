@@ -13,6 +13,9 @@ export class MessageInput implements Partial<Message> {
 
 @ObjectType({ description: "message type with receiver and groupe" })
 export class MessageWithRecepter extends Message {
+  @Field(() => User)
+  User?: User;
+
   @Field(() => User, { nullable: true })
   Receiver?: User;
 

@@ -97,6 +97,7 @@ type MessageResponse {
 type MessageWithRecepter {
   DiscussGroup: DiscussGroup
   Receiver: User
+  User: User!
   content: String!
   createdAt: DateTime!
   discussGroupId: Int

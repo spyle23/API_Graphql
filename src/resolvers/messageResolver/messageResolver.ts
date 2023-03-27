@@ -59,6 +59,7 @@ export class MessageResolver {
           userId: userId,
         },
         include: {
+          User: true,
           Receiver: true,
           DiscussGroup: true,
         },

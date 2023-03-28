@@ -11,6 +11,7 @@ import {
   Root,
   Subscription,
 } from "type-graphql";
+import { User, DiscussGroup } from "@generated/type-graphql/models";
 import { Message } from "@generated/type-graphql/models/Message";
 import { Context } from "../../context";
 import { MessageInput, MessageResponse, MessageWithRecepter } from "./type";
@@ -64,15 +65,37 @@ export class MessageResolver {
           createdAt: "desc",
         },
       });
-      const messageFilter = messages.filter(
-        (message) => message.userId === userId || message.receiverId === userId
+      const filteredMessages = messages.filter(
+        (message) =>
+          (message.userId === userId && message.receiverId !== userId) ||
+          (message.receiverId === userId && message.userId !== userId)
       );
-      const absoluteValue = Array.from(
-        new Set(messageFilter.map((obj) => obj.receiverId))
-      ).map((receiverId) => {
-        return messageFilter.find((obj) => obj.receiverId === receiverId);
+
+      const uniqueMessages: (Message & {
+        User: User;
+        Receiver: User;
+        DiscussGroup: DiscussGroup;
+      })[] = [];
+
+      filteredMessages.forEach((message) => {
+        const existingMessage = uniqueMessages.find(
+          (m) =>
+            (m.userId === message.userId &&
+              m.receiverId === message.receiverId) ||
+            (m.userId === message.receiverId && m.receiverId === message.userId)
+        );
+
+        if (!existingMessage) {
+          uniqueMessages.push(message);
+        }
       });
-      return absoluteValue;
+      // const absoluteValue = Array.from(
+      //   new Set(messageFilter.map((obj) => obj.receiverId))
+      // ).map((receiverId) => {
+      //   return messageFilter.find((obj) => obj.receiverId === receiverId);
+      // });
+
+      return uniqueMessages;
     } catch (error) {}
   }
 

@@ -55,9 +55,6 @@ export class MessageResolver {
   ) {
     try {
       const messages = await ctx.prisma.message.findMany({
-        where: {
-          userId: userId,
-        },
         include: {
           User: true,
           Receiver: true,
@@ -67,10 +64,13 @@ export class MessageResolver {
           createdAt: "desc",
         },
       });
+      const messageFilter = messages.filter(
+        (message) => message.userId === userId || message.receiverId === userId
+      );
       const absoluteValue = Array.from(
-        new Set(messages.map((obj) => obj.receiverId))
+        new Set(messageFilter.map((obj) => obj.receiverId))
       ).map((receiverId) => {
-        return messages.find((obj) => obj.receiverId === receiverId);
+        return messageFilter.find((obj) => obj.receiverId === receiverId);
       });
       return absoluteValue;
     } catch (error) {}
@@ -127,8 +127,8 @@ export class MessageResolver {
         data: dataMessage,
         include: {
           Receiver: true,
-          DiscussGroup: true
-        }
+          DiscussGroup: true,
+        },
       });
       if (message) {
         await pubSub.publish("SEND_MESSAGE", {

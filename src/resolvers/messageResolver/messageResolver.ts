@@ -190,7 +190,10 @@ export class MessageResolver {
             User: true,
           },
         });
-        return [...messagesByUserId, ...messageByReceiverId];
+        const orderRed = [...messagesByUserId, ...messageByReceiverId].sort(
+          (a, b) => a.id - b.id
+        );
+        return orderRed;
       }
       const messagesGroup = await ctx.prisma.message.findMany({
         where: {

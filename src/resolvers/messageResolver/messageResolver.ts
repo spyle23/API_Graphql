@@ -89,11 +89,6 @@ export class MessageResolver {
           uniqueMessages.push(message);
         }
       });
-      // const absoluteValue = Array.from(
-      //   new Set(messageFilter.map((obj) => obj.receiverId))
-      // ).map((receiverId) => {
-      //   return messageFilter.find((obj) => obj.receiverId === receiverId);
-      // });
 
       return uniqueMessages;
     } catch (error) {}
@@ -168,7 +163,7 @@ export class MessageResolver {
     }
   }
   @Authorized()
-  @Query(() => MessageResponse)
+  @Query(() => [MessageWithRecepter])
   async messageTwoUser(
     @Arg("userId") userId: number,
     @Arg("receiverId", { nullable: true }) receiverId: number,
@@ -182,31 +177,30 @@ export class MessageResolver {
             userId: userId,
             receiverId: receiverId,
           },
+          include: {
+            User: true,
+          },
         });
         const messageByReceiverId = await ctx.prisma.message.findMany({
           where: {
             userId: receiverId,
             receiverId: userId,
           },
+          include: {
+            User: true,
+          },
         });
-        const response: MessageResponse = {
-          message: "voici les messages",
-          data: [...messageByReceiverId, ...messagesByUserId],
-          success: true,
-        };
-        return response;
+        return [...messagesByUserId, ...messageByReceiverId];
       }
       const messagesGroup = await ctx.prisma.message.findMany({
         where: {
           discussGroupId: discussGroupId,
         },
+        include: {
+          User: true,
+        },
       });
-      const response: MessageResponse = {
-        message: "voici les messages du groupe",
-        data: messagesGroup,
-        success: true,
-      };
-      return response;
+      return messagesGroup;
     } catch (error) {
       console.log(error);
       return new ApolloError("une erreur s'est produite");

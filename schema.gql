@@ -173,7 +173,7 @@ type Query {
   getCommentByPost(postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
   getOrderPost: [PostDisplay!]!
-  messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): MessageResponse!
+  messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): [MessageWithRecepter!]!
   messagesOfCurrentUser(userId: Float!): [MessageWithRecepter!]!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): UserDetails

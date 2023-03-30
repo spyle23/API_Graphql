@@ -144,6 +144,7 @@ export class MessageResolver {
       const message = await ctx.prisma.message.create({
         data: dataMessage,
         include: {
+          User: true,
           Receiver: true,
           DiscussGroup: true,
         },

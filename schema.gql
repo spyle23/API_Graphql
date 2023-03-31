@@ -82,10 +82,10 @@ type Message {
   userId: Int!
 }
 
-"""messgae inputs"""
+"""message inputs"""
 input MessageInput {
   content: String!
-  image: String!
+  image: String
 }
 
 """message response type"""

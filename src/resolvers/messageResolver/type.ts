@@ -4,13 +4,13 @@ import { IsString } from "class-validator";
 import { ResponseForm } from "../../Types/ResponseForm";
 import { DiscussGroup, User } from "@generated/type-graphql/models";
 
-@InputType({ description: "messgae inputs" })
+@InputType({ description: "message inputs" })
 export class MessageInput implements Partial<Message> {
   @Field()
   @IsString()
   content: string;
 
-  @Field()
+  @Field(() => String, { nullable: true })
   image?: string;
 }
 

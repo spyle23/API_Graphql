@@ -76,6 +76,7 @@ type Message {
   createdAt: DateTime!
   discussGroupId: Int
   id: Int!
+  image: String
   receiverId: Int
   updatedAt: DateTime!
   userId: Int!
@@ -84,6 +85,7 @@ type Message {
 """messgae inputs"""
 input MessageInput {
   content: String!
+  image: String!
 }
 
 """message response type"""
@@ -102,6 +104,7 @@ type MessageWithRecepter {
   createdAt: DateTime!
   discussGroupId: Int
   id: Int!
+  image: String
   receiverId: Int
   updatedAt: DateTime!
   userId: Int!

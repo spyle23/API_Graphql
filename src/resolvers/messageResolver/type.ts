@@ -9,6 +9,9 @@ export class MessageInput implements Partial<Message> {
   @Field()
   @IsString()
   content: string;
+
+  @Field()
+  image?: string;
 }
 
 @ObjectType({ description: "message type with receiver and groupe" })

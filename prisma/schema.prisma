@@ -80,6 +80,7 @@ model Message {
     Receiver       User?         @relation(name: "receiver", fields: [receiverId], references: [id])
     receiverId     Int?
     content        String
+    image          String?       @db.Text
     createdAt      DateTime      @default(now())
     updatedAt      DateTime      @updatedAt
     DiscussGroup   DiscussGroup? @relation(fields: [discussGroupId], references: [id])

@@ -50,18 +50,15 @@ export class UserDetails extends User {
 
 @InputType({ description: "input for update user" })
 export class UpdateUserInput implements Partial<User> {
-  @Field()
+  @Field({ nullable: true })
   @IsEmail()
-  email: string;
+  email?: string;
 
   @Field({ nullable: true })
   firstname?: string;
 
   @Field({ nullable: true })
   lastname?: string;
-
-  @Field()
-  password: string;
 
   @Field({ nullable: true })
   civilite?: string;

@@ -221,10 +221,9 @@ type Subscription {
 """input for update user"""
 input UpdateUserInput {
   civilite: String
-  email: String!
+  email: String
   firstname: String
   lastname: String
-  password: String!
   photo: String
 }
 

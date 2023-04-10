@@ -201,6 +201,7 @@ enum ReactionType {
   HAHA
   LIKE
   LOVE
+  SAD
   WOAHOU
 }
 

@@ -30,6 +30,7 @@ export class ReactionResolver {
           reactions: true,
         },
       });
+
       const reaction = post?.reactions.find(
         (react) =>
           react.userId === userId &&
@@ -42,6 +43,18 @@ export class ReactionResolver {
           },
         });
         return "react is presented";
+      }
+      const reactionUpdate = post?.reactions.find((react)=> react.userId === userId)
+      if(reactionUpdate?.id){
+        await ctx.prisma.reaction.update({
+          where: {
+            id: reactionUpdate.id
+          }, 
+          data: {
+            reactionType: reactionType.reactionType
+          }
+        })
+        return "update react";
       }
       await ctx.prisma.reaction.create({
         data: {

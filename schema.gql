@@ -172,6 +172,7 @@ input PostInput {
 }
 
 type Query {
+  allUser: [User!]!
   getAllGroupUser(userId: Float!): [DiscussGroup!]!
   getCommentByPost(postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!

@@ -13,6 +13,18 @@ import { authToken } from "../../../authToken";
 
 @Resolver(User)
 export class UserResolver {
+
+  @Authorized()
+  @Query(()=> [User])
+  async allUser(@Ctx() ctx: Context){
+    try {
+      const users = ctx.prisma.user.findMany();
+      return users;
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite")
+    }
+  }
+
   @Authorized()
   @Query(() => UserDetails, { nullable: true })
   async profile(@Arg("userId") userId: number, @Ctx() ctx: Context) {

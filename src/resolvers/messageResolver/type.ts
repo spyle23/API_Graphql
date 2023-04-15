@@ -2,7 +2,7 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
 import { IsString } from "class-validator";
 import { ResponseForm } from "../../Types/ResponseForm";
-import { DiscussGroup, User } from "@generated/type-graphql/models";
+import { DiscussGroup, User, UserOnDiscussGroup } from "@generated/type-graphql/models";
 
 @InputType({ description: "message inputs" })
 export class MessageInput implements Partial<Message> {
@@ -13,6 +13,11 @@ export class MessageInput implements Partial<Message> {
   @Field(() => String, { nullable: true })
   image?: string;
 }
+@ObjectType({ description: "group with members" })
+export class GroupWithMembers extends DiscussGroup {
+  @Field(()=> [UserOnDiscussGroup])
+  members?: UserOnDiscussGroup[];
+}
 
 @ObjectType({ description: "message type with receiver and groupe" })
 export class MessageWithRecepter extends Message {
@@ -22,8 +27,8 @@ export class MessageWithRecepter extends Message {
   @Field(() => User, { nullable: true })
   Receiver?: User;
 
-  @Field(() => DiscussGroup, { nullable: true })
-  DiscussGroup?: DiscussGroup;
+  @Field(() => GroupWithMembers, { nullable: true })
+  DiscussGroup?: GroupWithMembers;
 }
 @ObjectType({ description: "message response type" })
 export class MessageResponse extends ResponseForm<Message[]> {

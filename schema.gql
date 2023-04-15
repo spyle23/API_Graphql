@@ -64,6 +64,17 @@ input DiscussGroupInput {
   groupName: String!
 }
 
+"""group with members"""
+type GroupWithMembers {
+  _count: DiscussGroupCount
+  coverPhoto: String
+  createdAt: DateTime!
+  groupName: String!
+  id: Int!
+  members: [UserOnDiscussGroup!]!
+  updatedAt: DateTime!
+}
+
 """Login response with token"""
 type LoginResponseForm {
   data: UserWithToken
@@ -97,7 +108,7 @@ type MessageResponse {
 
 """message type with receiver and groupe"""
 type MessageWithRecepter {
-  DiscussGroup: DiscussGroup
+  DiscussGroup: GroupWithMembers
   Receiver: User
   User: User!
   content: String!
@@ -278,6 +289,13 @@ type UserDetails {
   password: String!
   photo: String
   updatedAt: DateTime!
+}
+
+type UserOnDiscussGroup {
+  createdAt: DateTime!
+  discussGroupId: Int!
+  updatedAt: DateTime!
+  userId: Int!
 }
 
 """User with token"""

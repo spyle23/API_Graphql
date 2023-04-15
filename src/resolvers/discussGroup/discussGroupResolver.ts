@@ -15,28 +15,15 @@ export class DiscussGroupResolver {
   ) {
     try {
       const group = await ctx.prisma.discussGroup.create({
-        data,
+        data: {
+          ...data,
+          members: {
+            create: userChoose.membresId.map((value) => ({
+              User: { connect: { id: value } },
+            })),
+          },
+        },
       });
-      for (let user of userChoose.membresId) {
-        await ctx.prisma.user.update({
-          where: {
-            id: user,
-          },
-          data: {
-            groupes: {
-              create: [
-                {
-                  DiscussGroup: {
-                    connect: {
-                      id: group.id,
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        });
-      }
       return group;
     } catch (error) {
       console.log(error);

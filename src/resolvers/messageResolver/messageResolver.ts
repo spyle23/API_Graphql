@@ -33,7 +33,8 @@ export class MessageResolver {
       if (payload.message.discussGroupId) {
         return currentUser.groupes.find(
           ({ discussGroupId }) =>
-            discussGroupId === payload.message.discussGroupId
+            discussGroupId === payload.message.discussGroupId &&
+            payload.message.userId !== args.userId
         )
           ? true
           : false;
@@ -59,7 +60,11 @@ export class MessageResolver {
         include: {
           User: true,
           Receiver: true,
-          DiscussGroup: true,
+          DiscussGroup: {
+            include: {
+              members: true,
+            },
+          },
         },
         orderBy: {
           createdAt: "desc",
@@ -68,7 +73,12 @@ export class MessageResolver {
       const filteredMessages = messages.filter(
         (message) =>
           (message.userId === userId && message.receiverId !== userId) ||
-          (message.receiverId === userId && message.userId !== userId)
+          (message.receiverId === userId && message.userId !== userId) ||
+          (message.DiscussGroup?.members.find(
+            (value) => value.userId === userId
+          )
+            ? true
+            : false)
       );
 
       const uniqueMessages: (Message & {
@@ -82,7 +92,9 @@ export class MessageResolver {
           (m) =>
             (m.userId === message.userId &&
               m.receiverId === message.receiverId) ||
-            (m.userId === message.receiverId && m.receiverId === message.userId)
+            (m.userId === message.receiverId &&
+              m.receiverId === message.userId) ||
+            m.discussGroupId === message.discussGroupId
         );
 
         if (!existingMessage) {
@@ -91,7 +103,9 @@ export class MessageResolver {
       });
 
       return uniqueMessages;
-    } catch (error) {}
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
   }
 
   @Authorized()
@@ -132,15 +146,6 @@ export class MessageResolver {
               },
             },
           };
-      const receiver = receiverId
-        ? await ctx.prisma.user.findUnique({
-            where: {
-              id: receiverId,
-            },
-          })
-        : null;
-      if (!receiver)
-        return new ApolloError("Le recepteur du message n'existe pas");
       const message = await ctx.prisma.message.create({
         data: dataMessage,
         include: {

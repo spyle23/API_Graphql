@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   db:
@@ -13,12 +13,18 @@ services:
       - MYSQL_ROOT_DATABASE=spyle
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
+    networks:
+      - db-network
   
   prisma:
     image: prismagraphql/prisma:1.34
     restart: always
     ports:
       - "4466:4466"
+    links:
+      - db
+    networks:
+      - db-network
     environment:
       PRISMA_CONFIG: |
         port: 4466
@@ -30,20 +36,26 @@ services:
             user: root
             password: root
             migrations: true
-    volumes:
-      - prisma_data:/prisma
     depends_on:
       - db
 
   app:
     depends_on:
-      - db
+      - prisma
     image: api_graphql
     ports:
       - "4200:4200"
     restart: always
+    links:
+      - db
+    networks:
+      - db-network
     env_file:
       - .env
+
+networks:
+  db-network:
+    driver: bridge
+
 volumes:
   db_data: {}
-  prisma_data: {}

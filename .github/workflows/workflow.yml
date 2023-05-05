@@ -23,10 +23,14 @@ jobs:
           rm -rf node_modules
           rm -f yarn.lock
       
-      - name: install dependencies and build app
-        run: |
-          yarn --exact
+      - name: install dependencies
+        run: 
+          yarn install
+
+      - name: build app
+        run : | 
           yarn types:generate
-          yarn build
+          yarn build 
+          
 
 

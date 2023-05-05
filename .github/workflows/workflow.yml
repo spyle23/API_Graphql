@@ -26,6 +26,7 @@ jobs:
       - name: install dependencies and build app
         run: |
           yarn install
+          yarn prisma types:generate
           yarn build
 
 

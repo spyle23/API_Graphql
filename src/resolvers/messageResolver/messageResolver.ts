@@ -81,25 +81,36 @@ export class MessageResolver {
             : false)
       );
 
+      // console.log("filteredMessages", filteredMessages);
+
       const uniqueMessages: (Message & {
         User: User;
         Receiver: User;
         DiscussGroup: DiscussGroup;
       })[] = [];
 
-      filteredMessages.forEach((message) => {
-        const existingMessage = uniqueMessages.find(
-          (m) =>
-            (m.userId === message.userId &&
-              m.receiverId === message.receiverId) ||
-            (m.userId === message.receiverId &&
-              m.receiverId === message.userId) ||
-            m.discussGroupId === message.discussGroupId
-        );
+      const uniqueCombinaison: { [key: string]: boolean } = {};
 
-        if (!existingMessage) {
+
+
+      filteredMessages.forEach((message) => {
+
+        const shortedKey = message.receiverId ? [message.userId, message.receiverId].sort((a, b) => a - b) : [message.discussGroupId];
+        const key = shortedKey.length > 1 ? `${shortedKey[0]}-${shortedKey[1]}` : `${shortedKey[0]}`;
+
+        if (!uniqueCombinaison[key]) {
+          uniqueCombinaison[key] = true;
           uniqueMessages.push(message);
         }
+        // const existingMessage = uniqueMessages.some(
+        //   (m) =>
+        //     (m.userId === message.userId &&
+        //       m.receiverId === message.receiverId) ||
+        //     (m.userId === message.receiverId &&
+        //       m.receiverId === message.userId) ||
+        //     m.discussGroupId === message.discussGroupId
+        // );
+
       });
 
       return uniqueMessages;

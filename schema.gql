@@ -121,6 +121,12 @@ type MessageWithRecepter {
   userId: Int!
 }
 
+"""return type of writting subcription"""
+type MessageWrittingObject {
+  isWritting: Boolean!
+  userId: Float!
+}
+
 type Mutation {
   addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
@@ -136,6 +142,7 @@ type Mutation {
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
   upload(data: UploadInput!): String!
+  writtingCheck(discussGroupId: Float, isWritting: Boolean!, receiverId: Float, userId: Float!): MessageResponse!
 }
 
 type Notification {
@@ -229,6 +236,7 @@ input SignupInput {
 type Subscription {
   commentPost(userId: Float!): Notification!
   messageToUser(userId: Float!): MessageWithRecepter!
+  writeMessage(userId: Float!): MessageWrittingObject!
 }
 
 """input for update user"""

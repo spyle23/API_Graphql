@@ -14,7 +14,13 @@ import {
 import { User, DiscussGroup } from "@generated/type-graphql/models";
 import { Message } from "@generated/type-graphql/models/Message";
 import { Context } from "../../context";
-import { MessageInput, MessageResponse, MessageWithRecepter } from "./type";
+import {
+  MessageInput,
+  MessageResponse,
+  MessageWithRecepter,
+  MessageWritting,
+  MessageWrittingObject,
+} from "./type";
 import { ApolloError } from "apollo-server-express";
 
 @Resolver(Message)
@@ -47,6 +53,36 @@ export class MessageResolver {
     @Arg("userId") userId: number
   ): MessageWithRecepter {
     return payload;
+  }
+
+  @Subscription({
+    topics: "WRITE_MESSAGE",
+    filter: ({
+      payload,
+      args,
+    }: ResolverFilterData<
+      { write: MessageWritting },
+      { userId: number },
+      Context
+    >) => {
+      if (payload.write.discussGroup) {
+        return payload.write.discussGroup.members.find(
+          (i) => i.userId === args.userId
+        )
+          ? true
+          : false;
+      }
+      return payload.write.receiverId === args.userId;
+    },
+  })
+  writeMessage(
+    @Root("write") payload: MessageWritting,
+    @Arg("userId") userId: number
+  ): MessageWrittingObject {
+    return {
+      userId: payload.userId,
+      isWritting: payload.isWritting,
+    };
   }
 
   @Authorized()
@@ -91,12 +127,14 @@ export class MessageResolver {
 
       const uniqueCombinaison: { [key: string]: boolean } = {};
 
-
-
       filteredMessages.forEach((message) => {
-
-        const shortedKey = message.receiverId ? [message.userId, message.receiverId].sort((a, b) => a - b) : [message.discussGroupId];
-        const key = shortedKey.length > 1 ? `${shortedKey[0]}-${shortedKey[1]}` : `${shortedKey[0]}`;
+        const shortedKey = message.receiverId
+          ? [message.userId, message.receiverId].sort((a, b) => a - b)
+          : [message.discussGroupId];
+        const key =
+          shortedKey.length > 1
+            ? `${shortedKey[0]}-${shortedKey[1]}`
+            : `${shortedKey[0]}`;
 
         if (!uniqueCombinaison[key]) {
           uniqueCombinaison[key] = true;
@@ -110,7 +148,6 @@ export class MessageResolver {
         //       m.receiverId === message.userId) ||
         //     m.discussGroupId === message.discussGroupId
         // );
-
       });
 
       return uniqueMessages;
@@ -179,6 +216,39 @@ export class MessageResolver {
       return new ApolloError("Une erreur s'est produite");
     }
   }
+
+  @Authorized()
+  @Mutation(() => MessageResponse)
+  async writtingCheck(
+    @Arg("userId") userId: number,
+    @Arg("receiverId", { nullable: true }) receiverId: number,
+    @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
+    @Arg("isWritting") isWritting: boolean,
+    @Ctx() ctx: Context,
+    @PubSub() pubsub: PubSubEngine
+  ) {
+    try {
+      const discussGroup = discussGroupId
+        ? await ctx.prisma.discussGroup.findUnique({
+            where: { id: discussGroupId },
+          })
+        : null;
+      const payload = {
+        userId,
+        receiverId,
+        discussGroup,
+        isWritting,
+      };
+      await pubsub.publish("WRITE_MESSAGE", { write: payload });
+      return {
+        message: "check status writting",
+        success: true,
+      } as MessageResponse;
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
   @Authorized()
   @Query(() => [MessageWithRecepter])
   async messageTwoUser(

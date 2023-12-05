@@ -2,7 +2,11 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
 import { IsString } from "class-validator";
 import { ResponseForm } from "../../Types/ResponseForm";
-import { DiscussGroup, User, UserOnDiscussGroup } from "@generated/type-graphql/models";
+import {
+  DiscussGroup,
+  User,
+  UserOnDiscussGroup,
+} from "@generated/type-graphql/models";
 
 @InputType({ description: "message inputs" })
 export class MessageInput implements Partial<Message> {
@@ -15,7 +19,7 @@ export class MessageInput implements Partial<Message> {
 }
 @ObjectType({ description: "group with members" })
 export class GroupWithMembers extends DiscussGroup {
-  @Field(()=> [UserOnDiscussGroup])
+  @Field(() => [UserOnDiscussGroup])
   members?: UserOnDiscussGroup[];
 }
 
@@ -29,6 +33,21 @@ export class MessageWithRecepter extends Message {
 
   @Field(() => GroupWithMembers, { nullable: true })
   DiscussGroup?: GroupWithMembers;
+}
+@ObjectType({ description: "return type of writting subcription" })
+export class MessageWrittingObject {
+  @Field()
+  userId: number;
+  @Field()
+  isWritting: boolean;
+}
+
+@ObjectType({ description: "params for fitering the writting subscription" })
+export class MessageWritting extends MessageWrittingObject{
+  @Field(() => Number, { nullable: true })
+  receiverId?: number;
+  @Field(() => DiscussGroup, { nullable: true })
+  discussGroup?: DiscussGroup;
 }
 @ObjectType({ description: "message response type" })
 export class MessageResponse extends ResponseForm<Message[]> {

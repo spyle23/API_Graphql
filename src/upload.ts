@@ -18,11 +18,11 @@ export const uploadFile = ({ key, body, type }: FileType): Promise<string> => {
   let basePathUpload = "";
   const fileType = body.split("/")[0].split(":")[1];
   if (fileType === TypeFile.IMAGE) {
-    basePathUpload = `${process.env.URI}/image`;
+    basePathUpload = `/image`;
   } else if (fileType === TypeFile.APPLICATION) {
-    basePathUpload = `${process.env.URI}/pdf`;
+    basePathUpload = `/pdf`;
   } else {
-    basePathUpload = `${process.env.URI}/video`;
+    basePathUpload = `/video`;
   }
   const buffer = Buffer.from(
     body

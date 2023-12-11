@@ -6,6 +6,7 @@ import { MessageResolver } from "./messageResolver";
 import { PostResolver } from "./postResolver";
 import { ReactionResolver } from "./ReactionResolver";
 import { UserResolver } from "./user/userResolver/userResolver";
+import { DiscussionResolver } from "./discussion";
 
 //test
 export default [
@@ -15,5 +16,6 @@ export default [
   DiscussGroupResolver,
   CommentResolver,
   FileResolver,
+  DiscussGroupResolver,
   ReactionResolver,
 ] as NonEmptyArray<Function> | NonEmptyArray<string>;

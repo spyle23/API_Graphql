@@ -21,22 +21,55 @@ enum ReactionType {
 }
 
 model User {
-    id              Int                  @id @default(autoincrement())
-    email           String               @unique
-    firstname       String?
-    lastname        String?
-    password        String
-    photo           String?              @db.Text
-    civilite        String?
-    createdAt       DateTime             @default(now())
-    updatedAt       DateTime             @updatedAt
-    Post            Post[]
-    comments        Comment[]
-    messages        Message[]            @relation(name: "sender")
-    receiverMessage Message[]            @relation(name: "receiver")
-    groupes         UserOnDiscussGroup[]
-    reactions       Reaction[]
-    notifications   Notification[]
+    id                  Int                  @id @default(autoincrement())
+    email               String               @unique
+    firstname           String?
+    lastname            String?
+    password            String
+    photo               String?              @db.Text
+    civilite            String?
+    friends             User[]               @relation(name: "friends")
+    createdAt           DateTime             @default(now())
+    updatedAt           DateTime             @updatedAt
+    Post                Post[]
+    comments            Comment[]
+    messages            Message[]            @relation(name: "sender")
+    receiverMessage     Message[]            @relation(name: "receiver")
+    discussions         Discussion[]         @relation(name: "discussion-send")
+    receiverDiscussions Discussion[]         @relation(name: "discussion-received")
+    groupes             UserOnDiscussGroup[]
+    reactions           Reaction[]
+    notifications       Notification[]
+    User                User?                @relation(fields: [userId], references: [id], name: "friends")
+    userId              Int?
+}
+
+model Discussion {
+    id           Int           @id @default(autoincrement())
+    theme        String        @default("#512da8")
+    DiscussGroup DiscussGroup?
+    messages     Message[]
+    User         User          @relation(fields: [userId], references: [id], name: "discussion-send")
+    userId       Int
+    Receiver     User?         @relation(fields: [receiverId], references: [id], name: "discussion-received")
+    receiverId   Int?
+    createdAt    DateTime      @default(now())
+    updatedAt    DateTime      @updatedAt
+}
+
+model FileExt {
+    id        Int      @id @default(autoincrement())
+    name      String
+    extension String
+    url       String
+    Post      Post?    @relation(fields: [postId], references: [id])
+    postId    Int?
+    Comment   Comment? @relation(fields: [commentId], references: [id])
+    commentId Int?
+    Message   Message? @relation(fields: [messageId], references: [id])
+    messageId Int?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model Post {
@@ -44,7 +77,7 @@ model Post {
     userId      Int
     user        User       @relation(fields: [userId], references: [id])
     description String
-    image       String?    @db.Text
+    files       FileExt[]
     reactions   Reaction[]
     comments    Comment[]
     createdAt   DateTime   @default(now())
@@ -63,15 +96,15 @@ model Reaction {
 }
 
 model Comment {
-    id        Int      @id @default(autoincrement())
-    Post      Post     @relation(fields: [postId], references: [id])
+    id        Int       @id @default(autoincrement())
+    Post      Post      @relation(fields: [postId], references: [id])
     postId    Int
-    User      User     @relation(fields: [userId], references: [id])
-    image     String?  @db.Text
+    User      User      @relation(fields: [userId], references: [id])
+    files     FileExt[]
     content   String
     userId    Int
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 }
 
 model Message {
@@ -81,11 +114,13 @@ model Message {
     Receiver       User?         @relation(name: "receiver", fields: [receiverId], references: [id])
     receiverId     Int?
     content        String
-    image          String?       @db.Text
+    files          FileExt[]
     createdAt      DateTime      @default(now())
     updatedAt      DateTime      @updatedAt
     DiscussGroup   DiscussGroup? @relation(fields: [discussGroupId], references: [id])
     discussGroupId Int?
+    Discussion     Discussion    @relation(fields: [discussionId], references: [id])
+    discussionId   Int
 }
 
 model DiscussGroup {
@@ -96,6 +131,8 @@ model DiscussGroup {
     groupeMessages Message[]
     createdAt      DateTime             @default(now())
     updatedAt      DateTime             @updatedAt
+    Discussion     Discussion           @relation(fields: [discussionId], references: [id])
+    discussionId   Int                  @unique
 }
 
 model UserOnDiscussGroup {

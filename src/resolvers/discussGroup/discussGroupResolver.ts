@@ -11,12 +11,21 @@ export class DiscussGroupResolver {
   async createDiscussGroup(
     @Arg("data") data: DiscussGroupInput,
     @Arg("userChoose") userChoose: UserChoose,
+    @Arg("userId") userId: number,
     @Ctx() ctx: Context
   ) {
     try {
+      const discussion = await ctx.prisma.discussion.create({
+        data: { User: { connect: { id: userId } } },
+      });
       const group = await ctx.prisma.discussGroup.create({
         data: {
           ...data,
+          Discussion: {
+            connect: {
+              id: discussion.id,
+            },
+          },
           members: {
             create: userChoose.membresId.map((value) => ({
               User: { connect: { id: value } },

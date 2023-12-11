@@ -192,9 +192,9 @@ input PostInput {
 type Query {
   allUser: [User!]!
   getAllGroupUser(userId: Float!): [DiscussGroup!]!
-  getCommentByPost(postId: Float!): CommentResponse!
+  getCommentByPost(cursor: Float, limit: Float = 10, postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
-  getOrderPost: [PostDisplay!]!
+  getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
   messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): [MessageWithRecepter!]!
   messagesOfCurrentUser(userId: Float!): [MessageWithRecepter!]!
   postByUser(userId: Float!): [Post!]!

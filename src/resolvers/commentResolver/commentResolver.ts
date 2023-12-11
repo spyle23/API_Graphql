@@ -14,7 +14,7 @@ import {
 } from "type-graphql";
 import { Comment } from "@generated/type-graphql/models/Comment";
 import { Notification } from "@generated/type-graphql/models/Notification";
-import { CommentInput, CommentResponse } from "./type";
+import { CommentInput, CommentResponse, CommentWithUser } from "./type";
 import { Context } from "../../context";
 import { ApolloError } from "apollo-server-express";
 
@@ -22,21 +22,33 @@ import { ApolloError } from "apollo-server-express";
 export class CommentResolver {
   @Authorized()
   @Query(() => CommentResponse)
-  async getCommentByPost(@Arg("postId") postId: number, @Ctx() ctx: Context) {
+  async getCommentByPost(
+    @Arg("postId") postId: number,
+    @Ctx() ctx: Context,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Arg("cursor", { nullable: true }) cursor: number
+  ) {
     try {
-      const comments = await ctx.prisma.comment.findMany({
+      const filters: any = {
         where: {
           postId: postId,
         },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: limit,
         include: {
           User: true,
           Post: true,
         },
-      });
+      };
+      const comments = await ctx.prisma.comment.findMany(
+        cursor ? { ...filters, cursor: { id: cursor } } : filters
+      );
       const response: CommentResponse = {
         message: "Liste des commentaires pour le post",
         success: true,
-        data: comments,
+        data: comments as CommentWithUser[],
       };
       return response;
     } catch (error) {

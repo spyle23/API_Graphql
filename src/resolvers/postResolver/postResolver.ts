@@ -23,20 +23,29 @@ export class PostResolver {
 
   @Authorized()
   @Query(() => [PostDisplay])
-  async getOrderPost(@Ctx() ctx: Context) {
+  async getOrderPost(
+    @Ctx() ctx: Context,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Arg("cursor", { nullable: true }) cursor: number
+  ) {
+    const filters: any = {
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: limit,
+      include: {
+        comments: true,
+        user: true,
+        reactions: true,
+      },
+    };
     try {
-      const post = await ctx.prisma.post.findMany({
-        orderBy: {
-          updatedAt: "desc",
-        },
-        include: {
-          comments: true,
-          user: true,
-          reactions: true,
-        },
-      });
+      const post = await ctx.prisma.post.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      );
       return post;
     } catch (error) {
+      console.log("error", error);
       return new ApolloError("une erreur s'est produite");
     }
   }

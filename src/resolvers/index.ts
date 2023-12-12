@@ -8,8 +8,7 @@ import { ReactionResolver } from "./ReactionResolver";
 import { UserResolver } from "./user/userResolver/userResolver";
 import { DiscussionResolver } from "./discussion";
 
-//test
-export default [
+export const resolvers = [
   UserResolver,
   PostResolver,
   MessageResolver,

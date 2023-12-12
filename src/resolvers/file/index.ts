@@ -33,6 +33,7 @@ export class FileResolver {
       const fileUrls = await uploadFile(data);
       return fileUrls;
     } catch (error) {
+      console.log(error);
       return new ApolloError("une erreur s'est produite");
     }
   }

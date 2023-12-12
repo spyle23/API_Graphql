@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import express from "express";
 import * as tq from "type-graphql";
-import resolvers from "./resolvers";
+import { resolvers } from "./resolvers";
 import { context } from "./context";
 import cors from "cors";
 import { createServer } from "http";

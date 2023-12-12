@@ -16,33 +16,36 @@ type FileType = {
   type: string;
 };
 
-export const uploadFile = async(data: FileUpload[]): Promise<string[]> => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+export const uploadFile = async (data: FileUpload[]): Promise<string[]> => {
   const filePromises: string[] = [];
 
-  for(const file of data) {
+  for (const file of data) {
     const uniqueKey = uuid();
     const { filename, mimetype, createReadStream } = await file;
     const type = mimetype.split("/")[0];
     const uploadDir = `/uploads/${type}`;
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
+    const fullUploadDir = path.join(__dirname, uploadDir);
+    if (!fs.existsSync(fullUploadDir)) {
+      fs.mkdirSync(fullUploadDir);
     }
     const newFileName = `${filename.split(".")[0]}_${uniqueKey}.${
       filename.split(".")[1]
     }`;
-    const filePath = path.join(uploadDir, newFileName);
+    const filePath = path.join(fullUploadDir, newFileName);
     const fileStream = createReadStream();
     const writeStream = fs.createWriteStream(filePath);
-
+    console.log(writeStream);
     const promise = new Promise<string>((res, rej) => {
       fileStream
         .pipe(writeStream)
-        .on("finish", () => res(filePath))
+        .on("finish", () => res(uploadDir))
         .on("error", rej);
     });
 
     filePromises.push(await promise);
-  };
+  }
 
   return filePromises;
 };

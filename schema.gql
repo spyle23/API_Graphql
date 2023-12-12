@@ -4,13 +4,17 @@
 # -----------------------------------------------
 
 type Comment {
+  _count: CommentCount
   content: String!
   createdAt: DateTime!
   id: Int!
-  image: String
   postId: Int!
   updatedAt: DateTime!
   userId: Int!
+}
+
+type CommentCount {
+  files: Int!
 }
 
 """input for the comment"""
@@ -30,10 +34,10 @@ type CommentResponse {
 type CommentWithUser {
   Post: Post!
   User: User!
+  _count: CommentCount
   content: String!
   createdAt: DateTime!
   id: Int!
-  image: String
   postId: Int!
   updatedAt: DateTime!
   userId: Int!
@@ -48,6 +52,7 @@ type DiscussGroup {
   _count: DiscussGroupCount
   coverPhoto: String
   createdAt: DateTime!
+  discussionId: Int!
   groupName: String!
   id: Int!
   updatedAt: DateTime!
@@ -64,11 +69,46 @@ input DiscussGroupInput {
   groupName: String!
 }
 
+type Discussion {
+  _count: DiscussionCount
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int
+  theme: String!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+type DiscussionCount {
+  messages: Int!
+}
+
+"""Object that extends the discussion base models"""
+type DiscussionExtend {
+  DiscussGroup: GroupWithMembers
+  Receiver: User
+  User: User!
+  _count: DiscussionCount
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int
+  theme: String!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+"""input for changing theme discussion"""
+input DiscussionInput {
+  id: Float!
+  theme: String!
+}
+
 """group with members"""
 type GroupWithMembers {
   _count: DiscussGroupCount
   coverPhoto: String
   createdAt: DateTime!
+  discussionId: Int!
   groupName: String!
   id: Int!
   members: [UserOnDiscussGroup!]!
@@ -83,14 +123,19 @@ type LoginResponseForm {
 }
 
 type Message {
+  _count: MessageCount
   content: String!
   createdAt: DateTime!
   discussGroupId: Int
+  discussionId: Int!
   id: Int!
-  image: String
   receiverId: Int
   updatedAt: DateTime!
   userId: Int!
+}
+
+type MessageCount {
+  files: Int!
 }
 
 """message inputs"""
@@ -111,11 +156,12 @@ type MessageWithRecepter {
   DiscussGroup: GroupWithMembers
   Receiver: User
   User: User!
+  _count: MessageCount
   content: String!
   createdAt: DateTime!
   discussGroupId: Int
+  discussionId: Int!
   id: Int!
-  image: String
   receiverId: Int
   updatedAt: DateTime!
   userId: Int!
@@ -129,8 +175,10 @@ type MessageWrittingObject {
 
 type Mutation {
   addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
+  changeTheme(data: DiscussionInput!): Discussion!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
-  createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
+  createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!, userId: Float!): DiscussGroup!
+  createDiscussion(receiverId: Float!, userId: Float!): Discussion!
   createPost(data: PostInput!, userId: Float!): String!
   deleteComment(commentId: Float!, userId: Float!): String!
   deleteFile(url: String!): String!
@@ -138,10 +186,10 @@ type Mutation {
   login(email: String!, password: String!): LoginResponseForm!
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
-  sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
+  sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
-  upload(data: UploadInput!): String!
+  upload(data: [Upload!]!): [String!]!
   writtingCheck(discussGroupId: Float, isWritting: Boolean!, receiverId: Float, userId: Float!): MessageResponse!
 }
 
@@ -159,13 +207,13 @@ type Post {
   createdAt: DateTime!
   description: String!
   id: Int!
-  image: String
   updatedAt: DateTime!
   userId: Int!
 }
 
 type PostCount {
   comments: Int!
+  files: Int!
   reactions: Int!
 }
 
@@ -176,7 +224,6 @@ type PostDisplay {
   createdAt: DateTime!
   description: String!
   id: Int!
-  image: String
   reactions: [Reaction!]
   updatedAt: DateTime!
   user: User!
@@ -194,9 +241,9 @@ type Query {
   getAllGroupUser(userId: Float!): [DiscussGroup!]!
   getCommentByPost(cursor: Float, limit: Float = 10, postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
+  getDiscussionCurrentUser(userId: Float!): [DiscussionExtend!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
-  messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): [MessageWithRecepter!]!
-  messagesOfCurrentUser(userId: Float!): [MessageWithRecepter!]!
+  messageTwoUser(discussionId: Float!): [MessageWithRecepter!]!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): UserDetails
 }
@@ -248,12 +295,8 @@ input UpdateUserInput {
   photo: String
 }
 
-"""input for the file"""
-input UploadInput {
-  data: String!
-  name: String!
-  type: String!
-}
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
 
 type User {
   _count: UserCount
@@ -266,6 +309,7 @@ type User {
   password: String!
   photo: String
   updatedAt: DateTime!
+  userId: Int
 }
 
 """user id in the group discuss"""
@@ -276,10 +320,13 @@ input UserChoose {
 type UserCount {
   Post: Int!
   comments: Int!
+  discussions: Int!
+  friends: Int!
   groupes: Int!
   messages: Int!
   notifications: Int!
   reactions: Int!
+  receiverDiscussions: Int!
   receiverMessage: Int!
 }
 
@@ -297,6 +344,7 @@ type UserDetails {
   password: String!
   photo: String
   updatedAt: DateTime!
+  userId: Int
 }
 
 type UserOnDiscussGroup {
@@ -319,4 +367,5 @@ type UserWithToken {
   photo: String
   token: String!
   updatedAt: DateTime!
+  userId: Int
 }

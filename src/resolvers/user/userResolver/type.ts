@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Notification, Post } from "@generated/type-graphql/models";
 import { User } from "@generated/type-graphql/models/User";
 import { IsEmail } from "class-validator";

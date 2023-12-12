@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Comment } from "@generated/type-graphql/models/Comment";
 import { Post } from "@generated/type-graphql/models/Post";
 import { User } from "@generated/type-graphql/models/User";

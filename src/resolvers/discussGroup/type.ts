@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Field, InputType, ObjectType } from "type-graphql";
 import {
   DiscussGroup,

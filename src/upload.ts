@@ -1,5 +1,8 @@
 import { v4 as uuid } from "uuid";
 import fs from "fs";
+import { FileUpload } from "./Types/FileUpload";
+import path from "path";
+import { fileURLToPath } from "url";
 
 enum TypeFile {
   IMAGE = "image",
@@ -13,37 +16,35 @@ type FileType = {
   type: string;
 };
 
-export const uploadFile = ({ key, body, type }: FileType): Promise<string> => {
-  const uniqueKey = uuid();
-  let basePathUpload = "";
-  const fileType = body.split("/")[0].split(":")[1];
-  if (fileType === TypeFile.IMAGE) {
-    basePathUpload = `/image`;
-  } else if (fileType === TypeFile.APPLICATION) {
-    basePathUpload = `/pdf`;
-  } else {
-    basePathUpload = `/video`;
-  }
-  const buffer = Buffer.from(
-    body
-      .replace(/^data:image\/\w+;base64,/, "")
-      .replace(/^data:application\/\w+;base64,/, "")
-      .replace(/^data:video\/\w+;base64,/, ""),
-    "base64"
-  );
-  const filePath = `./src/uploads/${fileType}/${uniqueKey}.${type}`;
-  return new Promise<string>((resolve, reject) => {
-    
-    fs.writeFile(filePath, buffer, "base64", (err) => {
-      if (err) {
-        console.log("err: ", err);
-        reject(err);
-      } else {
-        console.log(`${basePathUpload}/${uniqueKey}.${type}`)
-        resolve(`${basePathUpload}/${uniqueKey}.${type}`);
-      }
+export const uploadFile = async(data: FileUpload[]): Promise<string[]> => {
+  const filePromises: string[] = [];
+
+  for(const file of data) {
+    const uniqueKey = uuid();
+    const { filename, mimetype, createReadStream } = await file;
+    const type = mimetype.split("/")[0];
+    const uploadDir = `/uploads/${type}`;
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
+    const newFileName = `${filename.split(".")[0]}_${uniqueKey}.${
+      filename.split(".")[1]
+    }`;
+    const filePath = path.join(uploadDir, newFileName);
+    const fileStream = createReadStream();
+    const writeStream = fs.createWriteStream(filePath);
+
+    const promise = new Promise<string>((res, rej) => {
+      fileStream
+        .pipe(writeStream)
+        .on("finish", () => res(filePath))
+        .on("error", rej);
     });
-  });
+
+    filePromises.push(await promise);
+  };
+
+  return filePromises;
 };
 
 export const deleteFile = (url: string): Promise<boolean> => {

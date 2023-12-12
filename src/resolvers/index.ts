@@ -14,6 +14,7 @@ export default [
   PostResolver,
   MessageResolver,
   DiscussGroupResolver,
+  DiscussionResolver,
   CommentResolver,
   FileResolver,
   DiscussGroupResolver,

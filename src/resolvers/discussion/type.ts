@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Field, InputType, ObjectType } from "type-graphql";
 import { Discussion, User } from "@generated/type-graphql/models";
 import { GroupWithMembers } from "../messageResolver/type";

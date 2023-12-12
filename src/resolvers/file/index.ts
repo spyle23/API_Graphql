@@ -9,6 +9,8 @@ import {
   Resolver,
 } from "type-graphql";
 import { deleteFile, uploadFile } from "../../upload";
+import GraphQLUpload from "graphql-upload/GraphQLUpload.mjs";
+import { FileUpload } from "../../Types/FileUpload";
 
 @InputType({ description: "input for the file" })
 class UploadInput {
@@ -25,16 +27,14 @@ class UploadInput {
 @Resolver(String)
 export class FileResolver {
   @Authorized()
-  @Mutation(() => String)
-  async upload(@Arg("data") data: UploadInput) {
-    const { name, type } = data;
-    const trueType = type.split("/")[1];
-    const file = await uploadFile({
-      key: name,
-      body: data.data,
-      type: trueType,
-    });
-    return file;
+  @Mutation(() => [String])
+  async upload(@Arg("data", () => [GraphQLUpload]) data: FileUpload[]) {
+    try {
+      const fileUrls = await uploadFile(data);
+      return fileUrls;
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
   }
 
   @Authorized()

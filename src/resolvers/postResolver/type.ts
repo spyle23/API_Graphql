@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Comment, Reaction, User } from "@generated/type-graphql/models";
 import { Post } from "@generated/type-graphql/models/Post";
 import { IsString, Length } from "class-validator";

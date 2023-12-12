@@ -36,7 +36,6 @@ export const uploadFile = async (data: FileUpload[]): Promise<string[]> => {
     const filePath = path.join(fullUploadDir, newFileName);
     const fileStream = createReadStream();
     const writeStream = fs.createWriteStream(filePath);
-    console.log(writeStream);
     const promise = new Promise<string>((res, rej) => {
       fileStream
         .pipe(writeStream)

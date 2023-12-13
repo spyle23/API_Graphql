@@ -20,7 +20,7 @@ type CommentCount {
 """input for the comment"""
 input CommentInput {
   content: String!
-  image: String
+  files: [FileInput!]!
 }
 
 """response type for comment"""
@@ -103,6 +103,34 @@ input DiscussionInput {
   theme: String!
 }
 
+type FileExt {
+  commentId: Int
+  createdAt: DateTime!
+  extension: String!
+  id: Int!
+  messageId: Int
+  name: String!
+  postId: Int
+  updatedAt: DateTime!
+  url: String!
+}
+
+"""input for file"""
+input FileInput {
+  extension: String!
+  name: String!
+  url: String!
+}
+
+type FriendRequest {
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int
+  status: RequestStatus!
+  updatedAt: DateTime!
+  userId: Int
+}
+
 """group with members"""
 type GroupWithMembers {
   _count: DiscussGroupCount
@@ -141,7 +169,7 @@ type MessageCount {
 """message inputs"""
 input MessageInput {
   content: String!
-  image: String
+  files: [FileInput!]!
 }
 
 """message response type"""
@@ -174,6 +202,7 @@ type MessageWrittingObject {
 }
 
 type Mutation {
+  addFriends(friendId: Float!, userId: Float!): String!
   addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
   changeTheme(data: DiscussionInput!): Discussion!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
@@ -182,14 +211,17 @@ type Mutation {
   createPost(data: PostInput!, userId: Float!): String!
   deleteComment(commentId: Float!, userId: Float!): String!
   deleteFile(url: String!): String!
+  deleteFriends(friendId: Float!, userId: Float!): String!
   deleteMessageById(messageId: Float!, userId: Float!): String!
+  handleFriendRequest(friendRequestId: Float!, status: String!): String!
   login(email: String!, password: String!): LoginResponseForm!
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
+  sendFriendRequest(receiverId: Float!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
-  upload(data: [Upload!]!): [String!]!
+  upload(data: [Upload!]!): [FileExt!]!
   writtingCheck(discussGroupId: Float, isWritting: Boolean!, receiverId: Float, userId: Float!): MessageResponse!
 }
 
@@ -233,7 +265,7 @@ type PostDisplay {
 """inputs for post"""
 input PostInput {
   description: String!
-  image: String
+  files: [FileInput!]!
 }
 
 type Query {
@@ -242,7 +274,9 @@ type Query {
   getCommentByPost(cursor: Float, limit: Float = 10, postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
   getDiscussionCurrentUser(userId: Float!): [DiscussionExtend!]!
+  getFriends(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
+  getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequest!]!
   messageTwoUser(discussionId: Float!): [MessageWithRecepter!]!
   postByUser(userId: Float!): [Post!]!
   profile(userId: Float!): UserDetails
@@ -271,6 +305,12 @@ enum ReactionType {
   WOAHOU
 }
 
+enum RequestStatus {
+  ACCEPTED
+  DENIED
+  PENDING
+}
+
 """user inputs"""
 input SignupInput {
   civilite: String
@@ -282,7 +322,9 @@ input SignupInput {
 
 type Subscription {
   commentPost(userId: Float!): Notification!
+  getStatusUser(userId: Float!): UserWithStatus!
   messageToUser(userId: Float!): MessageWithRecepter!
+  sendRequestNotif(userId: Float!): FriendRequest!
   writeMessage(userId: Float!): MessageWrittingObject!
 }
 
@@ -321,6 +363,7 @@ type UserCount {
   Post: Int!
   comments: Int!
   discussions: Int!
+  friendRequest: Int!
   friends: Int!
   groupes: Int!
   messages: Int!
@@ -328,6 +371,7 @@ type UserCount {
   reactions: Int!
   receiverDiscussions: Int!
   receiverMessage: Int!
+  request: Int!
 }
 
 """details of user"""
@@ -352,6 +396,22 @@ type UserOnDiscussGroup {
   discussGroupId: Int!
   updatedAt: DateTime!
   userId: Int!
+}
+
+"""Return type of user for status online"""
+type UserWithStatus {
+  _count: UserCount
+  civilite: String
+  createdAt: DateTime!
+  email: String!
+  firstname: String
+  id: Int!
+  lastname: String
+  password: String!
+  photo: String
+  status: Boolean!
+  updatedAt: DateTime!
+  userId: Int
 }
 
 """User with token"""

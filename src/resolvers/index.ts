@@ -7,6 +7,7 @@ import { PostResolver } from "./postResolver";
 import { ReactionResolver } from "./ReactionResolver";
 import { UserResolver } from "./user/userResolver/userResolver";
 import { DiscussionResolver } from "./discussion";
+import { FriendRequestResolver } from "./friendRequestResolver";
 
 export const resolvers = [
   UserResolver,
@@ -14,6 +15,7 @@ export const resolvers = [
   MessageResolver,
   DiscussGroupResolver,
   DiscussionResolver,
+  FriendRequestResolver,
   CommentResolver,
   FileResolver,
   DiscussGroupResolver,

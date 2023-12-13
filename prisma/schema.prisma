@@ -20,6 +20,12 @@ enum ReactionType {
     GRR
 }
 
+enum RequestStatus {
+    PENDING
+    ACCEPTED
+    DENIED
+}
+
 model User {
     id                  Int                  @id @default(autoincrement())
     email               String               @unique
@@ -37,11 +43,24 @@ model User {
     receiverMessage     Message[]            @relation(name: "receiver")
     discussions         Discussion[]         @relation(name: "discussion-send")
     receiverDiscussions Discussion[]         @relation(name: "discussion-received")
+    request             FriendRequest[]      @relation(name: "request-send")
+    friendRequest       FriendRequest[]      @relation(name: "request-received")
     groupes             UserOnDiscussGroup[]
     reactions           Reaction[]
     notifications       Notification[]
     User                User?                @relation(fields: [userId], references: [id], name: "friends")
     userId              Int?
+}
+
+model FriendRequest {
+    id         Int           @id @default(autoincrement())
+    status     RequestStatus
+    Receiver   User?         @relation(fields: [receiverId], references: [id], name: "request-received")
+    receiverId Int?
+    User       User?         @relation(fields: [userId], references: [id], name: "request-send")
+    userId     Int?
+    createdAt  DateTime      @default(now())
+    updatedAt  DateTime      @updatedAt
 }
 
 model Discussion {

@@ -170,6 +170,11 @@ export class MessageResolver {
       const dataMessage = receiverId
         ? {
             ...messageInput,
+            files: {
+              createMany: {
+                data: messageInput.files
+              }
+            },
             Discussion: {
               connect: {
                 id: discussionId,
@@ -188,6 +193,11 @@ export class MessageResolver {
           }
         : {
             ...messageInput,
+            files: {
+              createMany: {
+                data: messageInput.files
+              }
+            },
             Discussion: {
               connect: {
                 id: discussionId,

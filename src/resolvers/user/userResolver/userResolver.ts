@@ -1,4 +1,16 @@
-import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  Mutation,
+  PubSub,
+  PubSubEngine,
+  Query,
+  Resolver,
+  ResolverFilterData,
+  Root,
+  Subscription,
+} from "type-graphql";
 import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../../context";
 import { ApolloError } from "apollo-server-express";
@@ -8,20 +20,69 @@ import {
   SignupInput,
   UpdateUserInput,
   UserDetails,
+  UserWithStatus,
 } from "./type";
 import { authToken } from "../../../authToken";
 
 @Resolver(User)
 export class UserResolver {
-
+  @Subscription({
+    topics: "STATUS",
+    filter: async ({
+      args,
+      payload,
+      context,
+    }: ResolverFilterData<
+      { userLogin: UserWithStatus },
+      { userId: number },
+      Context
+    >) => {
+      const friend = await context.prisma.user.findFirst({
+        where: {
+          id: args.userId,
+          friends: { some: { id: payload.userLogin.id } },
+        },
+      });
+      return friend ? true : false;
+    },
+  })
+  getStatusUser(
+    @Root("userLogin") payload: UserWithStatus,
+    @Arg("userId") userId: number
+  ): UserWithStatus {
+    return payload;
+  }
   @Authorized()
-  @Query(()=> [User])
-  async allUser(@Ctx() ctx: Context){
+  @Query(() => [User])
+  async allUser(@Ctx() ctx: Context) {
     try {
       const users = ctx.prisma.user.findMany();
       return users;
     } catch (error) {
-      return new ApolloError("une erreur s'est produite")
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Query(() => [User])
+  async getFriends(
+    @Arg("userId") userId: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Ctx() ctx: Context,
+    @Arg("cursor", { nullable: true }) cursor: number
+  ) {
+    try {
+      const filters: any = {
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+        take: limit,
+      };
+      const friends = await ctx.prisma.user.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      );
+      return friends;
+    } catch (error) {
+      return new ApolloError("une Erreur s'est produite");
     }
   }
 
@@ -36,6 +97,7 @@ export class UserResolver {
         include: {
           Post: true,
           notifications: true,
+          friends: true,
         },
       });
       return user;
@@ -83,6 +145,7 @@ export class UserResolver {
   async login(
     @Arg("email") email: string,
     @Arg("password") password: string,
+    @PubSub() pubsub: PubSubEngine,
     @Ctx() ctx: Context
   ) {
     try {
@@ -113,6 +176,7 @@ export class UserResolver {
           token,
         },
       };
+      pubsub.publish("STATUS", { userLogin: { ...user, status: true } });
       return response;
     } catch (error) {
       console.log(error);
@@ -120,6 +184,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized()
   @Mutation(() => String)
   async updateUser(
     @Arg("userId") userId: number,
@@ -134,6 +199,46 @@ export class UserResolver {
         data: updateUserInput,
       });
       return "Information mis à jour";
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async addFriends(
+    @Arg("userId") userId: number,
+    @Arg("friendId") friendId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      await ctx.prisma.user.update({
+        where: { id: userId },
+        data: { User: { connect: { id: friendId } } },
+      });
+      await ctx.prisma.user.update({
+        where: { id: friendId },
+        data: { User: { connect: { id: userId } } },
+      });
+      return "add friend success";
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async deleteFriends(
+    @Arg("userId") userId: number,
+    @Arg("friendId") friendId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      await ctx.prisma.user.update({
+        where: { id: userId },
+        data: { friends: { delete: { id: friendId } } },
+      });
+      return "delete friend success";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

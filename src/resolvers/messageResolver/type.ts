@@ -8,6 +8,7 @@ import {
   User,
   UserOnDiscussGroup,
 } from "@generated/type-graphql/models";
+import { FileInput } from "../postResolver/type";
 
 @InputType({ description: "message inputs" })
 export class MessageInput implements Partial<Message> {
@@ -15,8 +16,8 @@ export class MessageInput implements Partial<Message> {
   @IsString()
   content: string;
 
-  @Field(() => String, { nullable: true })
-  image?: string;
+  @Field(()=>[FileInput])
+  files?: FileInput[];
 }
 @ObjectType({ description: "group with members" })
 export class GroupWithMembers extends DiscussGroup {

@@ -3,6 +3,7 @@ import fs from "fs";
 import { FileUpload } from "./Types/FileUpload";
 import path from "path";
 import { fileURLToPath } from "url";
+import { FileExt } from "@generated/type-graphql/models";
 
 enum TypeFile {
   IMAGE = "image",
@@ -18,8 +19,8 @@ type FileType = {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-export const uploadFile = async (data: FileUpload[]): Promise<string[]> => {
-  const filePromises: string[] = [];
+export const uploadFile = async (data: FileUpload[]): Promise<Partial<FileExt>[]> => {
+  const fileExt: Partial<FileExt>[] = [];
 
   for (const file of data) {
     const uniqueKey = uuid();
@@ -43,10 +44,16 @@ export const uploadFile = async (data: FileUpload[]): Promise<string[]> => {
         .on("error", rej);
     });
 
-    filePromises.push(await promise);
+    const fileToSave: Partial<FileExt> = {
+      name: filename,
+      url: await promise,
+      extension: type
+    }
+
+    fileExt.push(fileToSave);
   }
 
-  return filePromises;
+  return fileExt;
 };
 
 export const deleteFile = (url: string): Promise<boolean> => {

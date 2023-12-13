@@ -3,6 +3,7 @@ import { IsString } from "class-validator";
 import {
   Arg,
   Authorized,
+  Ctx,
   Field,
   InputType,
   Mutation,
@@ -11,6 +12,8 @@ import {
 import { deleteFile, uploadFile } from "../../upload";
 import GraphQLUpload from "graphql-upload/GraphQLUpload.mjs";
 import { FileUpload } from "../../Types/FileUpload";
+import { FileExt } from "@generated/type-graphql/models";
+import { Context } from "../../context";
 
 @InputType({ description: "input for the file" })
 class UploadInput {
@@ -27,7 +30,7 @@ class UploadInput {
 @Resolver(String)
 export class FileResolver {
   @Authorized()
-  @Mutation(() => [String])
+  @Mutation(() => [FileExt])
   async upload(@Arg("data", () => [GraphQLUpload]) data: FileUpload[]) {
     try {
       const fileUrls = await uploadFile(data);

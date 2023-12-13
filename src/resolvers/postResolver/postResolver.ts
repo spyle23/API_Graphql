@@ -58,9 +58,15 @@ export class PostResolver {
     @Ctx() ctx: Context
   ) {
     try {
-      await ctx.prisma.post.create({
+      const { files, description } = data;
+      const post = await ctx.prisma.post.create({
         data: {
-          ...data,
+          description,
+          files: {
+            createMany: {
+              data: files,
+            },
+          },
           user: {
             connect: {
               id: userId,
@@ -68,9 +74,10 @@ export class PostResolver {
           },
         },
       });
+
       return "post crée";
     } catch (error) {
-      return new ApolloError("post non");
+      return new ApolloError(error);
     }
   }
 }

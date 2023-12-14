@@ -1,5 +1,5 @@
 //@ts-nocheck
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType, ObjectType } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
 import { IsString } from "class-validator";
 import { ResponseForm } from "../../Types/ResponseForm";
@@ -61,4 +61,22 @@ export class MessageResponse extends ResponseForm<Message[]> {
 
   @Field()
   success: boolean;
+}
+
+@ObjectType({ description: "payload for call video stream" })
+export class CallTypeObject {
+  @Field()
+  userId: number;
+
+  @Field()
+  receiverId: number;
+
+  @Field()
+  signal: string;
+}
+
+@ObjectType({ description: "payload for handle video call " })
+export class ResponseCallType extends CallTypeObject {
+  @Field()
+  status: boolean;
 }

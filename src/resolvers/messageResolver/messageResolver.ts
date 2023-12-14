@@ -14,11 +14,13 @@ import {
 import { Message } from "@generated/type-graphql/models/Message";
 import { Context } from "../../context";
 import {
+  CallTypeObject,
   MessageInput,
   MessageResponse,
   MessageWithRecepter,
   MessageWritting,
   MessageWrittingObject,
+  ResponseCallType,
 } from "./type";
 import { ApolloError } from "apollo-server-express";
 
@@ -55,6 +57,46 @@ export class MessageResolver {
   }
 
   @Subscription({
+    topics: "LISTEN_CALL",
+    filter: ({
+      args,
+      payload,
+    }: ResolverFilterData<
+      { userToCall: CallTypeObject },
+      { userId: number },
+      Context
+    >) => {
+      return payload.userToCall.receiverId === args.userId;
+    },
+  })
+  listenCall(
+    @Root("userToCall") payload: CallTypeObject,
+    @Arg("userId") userId: number
+  ) {
+    return payload;
+  }
+
+  @Subscription({
+    topics: "HANDLE_CALL",
+    filter: ({
+      args,
+      payload,
+    }: ResolverFilterData<
+      { data: CallTypeObject },
+      { userId: number },
+      Context
+    >) => {
+      return payload.data.userId === args.userId;
+    },
+  })
+  handleCall(
+    @Root("data") payload: ResponseCallType,
+    @Arg("userId") userId: number
+  ): ResponseCallType {
+    return payload;
+  }
+
+  @Subscription({
     topics: "WRITE_MESSAGE",
     filter: ({
       payload,
@@ -82,6 +124,42 @@ export class MessageResolver {
       userId: payload.userId,
       isWritting: payload.isWritting,
     };
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async callUser(
+    @Arg("userId") userId: number,
+    @Arg("receiverId") receiverId: number,
+    @Arg("signal") signal: string,
+    @PubSub() pubSub: PubSubEngine
+  ) {
+    try {
+      await pubSub.publish("LISTEN_CALL", {
+        userToCall: { userId, receiverId, signal },
+      });
+      return "call send success";
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async handleCallMutation(
+    @Arg("userId") userId: number,
+    @Arg("receiverId") receiverId: number,
+    @Arg("signal") signal: string,
+    @Arg("status") status: boolean,
+    @PubSub() pubsub: PubSubEngine
+  ) {
+    try {
+      await pubsub.publish("HANDLE_CALL", {
+        data: { userId, receiverId, signal, status },
+      });
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
   }
 
   // @Authorized()
@@ -172,8 +250,8 @@ export class MessageResolver {
             ...messageInput,
             files: {
               createMany: {
-                data: messageInput.files
-              }
+                data: messageInput.files,
+              },
             },
             Discussion: {
               connect: {
@@ -195,8 +273,8 @@ export class MessageResolver {
             ...messageInput,
             files: {
               createMany: {
-                data: messageInput.files
-              }
+                data: messageInput.files,
+              },
             },
             Discussion: {
               connect: {

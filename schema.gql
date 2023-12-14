@@ -215,6 +215,7 @@ type Mutation {
   deleteMessageById(messageId: Float!, userId: Float!): String!
   handleFriendRequest(friendRequestId: Float!, status: String!): String!
   login(email: String!, password: String!): LoginResponseForm!
+  logout(userId: Float!): String!
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
   sendFriendRequest(receiverId: Float!, userId: Float!): String!

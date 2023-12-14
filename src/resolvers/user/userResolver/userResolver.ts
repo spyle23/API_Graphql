@@ -243,4 +243,20 @@ export class UserResolver {
       return new ApolloError("une erreur s'est produite");
     }
   }
+
+  @Authorized()
+  @Mutation(() => String)
+  async logout(
+    @Arg("userId") userId: number,
+    @PubSub() pubsub: PubSubEngine,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
+      pubsub.publish("STATUS", { userLogin: { ...user, status: false } });
+      return "logout success";
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
 }

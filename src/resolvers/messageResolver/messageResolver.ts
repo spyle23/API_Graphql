@@ -72,7 +72,7 @@ export class MessageResolver {
   listenCall(
     @Root("userToCall") payload: CallTypeObject,
     @Arg("userId") userId: number
-  ) {
+  ): CallTypeObject {
     return payload;
   }
 

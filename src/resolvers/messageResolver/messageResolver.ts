@@ -23,6 +23,7 @@ import {
   ResponseCallType,
 } from "./type";
 import { ApolloError } from "apollo-server-express";
+import { DiscussionExtend } from "../discussion/type";
 
 @Resolver(Message)
 export class MessageResolver {
@@ -50,9 +51,9 @@ export class MessageResolver {
     },
   })
   messageToUser(
-    @Root("message") payload: MessageWithRecepter,
+    @Root("message") payload: DiscussionExtend,
     @Arg("userId") userId: number
-  ): MessageWithRecepter {
+  ): DiscussionExtend {
     return payload;
   }
 
@@ -292,17 +293,16 @@ export class MessageResolver {
               },
             },
           };
-      const message = await ctx.prisma.message.create({
+      await ctx.prisma.message.create({
         data: dataMessage,
-        include: {
-          User: true,
-          Receiver: true,
-          DiscussGroup: true,
-        },
       });
-      if (message) {
+      const discussion = await ctx.prisma.discussion.findUnique({
+        where: { id: discussionId },
+        include: { User: true, Receiver: true, DiscussGroup: true },
+      });
+      if (discussion) {
         await pubSub.publish("SEND_MESSAGE", {
-          message: message,
+          message: discussion,
         });
         return {
           message: "message envoyé",
@@ -359,6 +359,7 @@ export class MessageResolver {
         include: {
           User: true,
           Receiver: true,
+          files: true,
           DiscussGroup: {
             include: {
               members: true,

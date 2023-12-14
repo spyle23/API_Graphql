@@ -40,6 +40,7 @@ export class CommentResolver {
         include: {
           User: true,
           Post: true,
+          files: true,
         },
       };
       const comments = await ctx.prisma.comment.findMany(

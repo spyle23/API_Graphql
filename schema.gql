@@ -44,6 +44,7 @@ type CommentWithUser {
   _count: CommentCount
   content: String!
   createdAt: DateTime!
+  files: [FileExt!]!
   id: Int!
   postId: Int!
   updatedAt: DateTime!
@@ -129,7 +130,9 @@ input FileInput {
   url: String!
 }
 
-type FriendRequest {
+"""friend request return type with sender"""
+type FriendRequestExtend {
+  User: User!
   createdAt: DateTime!
   id: Int!
   receiverId: Int
@@ -196,6 +199,7 @@ type MessageWithRecepter {
   createdAt: DateTime!
   discussGroupId: Int
   discussionId: Int!
+  files: [FileExt!]!
   id: Int!
   receiverId: Int
   updatedAt: DateTime!
@@ -265,6 +269,7 @@ type PostDisplay {
   comments: [Comment!]
   createdAt: DateTime!
   description: String!
+  files: [FileExt!]!
   id: Int!
   reactions: [Reaction!]
   updatedAt: DateTime!
@@ -286,9 +291,9 @@ type Query {
   getDiscussionCurrentUser(userId: Float!): [DiscussionExtend!]!
   getFriends(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
-  getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequest!]!
+  getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequestExtend!]!
   messageTwoUser(discussionId: Float!): [MessageWithRecepter!]!
-  postByUser(userId: Float!): [Post!]!
+  postByUser(userId: Float!): [PostDisplay!]!
   profile(userId: Float!): UserDetails
 }
 
@@ -343,8 +348,8 @@ type Subscription {
   getStatusUser(userId: Float!): UserWithStatus!
   handleCall(userId: Float!): ResponseCallType!
   listenCall(userId: Float!): CallTypeObject!
-  messageToUser(userId: Float!): MessageWithRecepter!
-  sendRequestNotif(userId: Float!): FriendRequest!
+  messageToUser(userId: Float!): DiscussionExtend!
+  sendRequestNotif(userId: Float!): FriendRequestExtend!
   writeMessage(userId: Float!): MessageWrittingObject!
 }
 

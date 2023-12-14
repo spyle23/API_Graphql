@@ -5,6 +5,7 @@ import { IsString } from "class-validator";
 import { ResponseForm } from "../../Types/ResponseForm";
 import {
   DiscussGroup,
+  FileExt,
   User,
   UserOnDiscussGroup,
 } from "@generated/type-graphql/models";
@@ -35,6 +36,9 @@ export class MessageWithRecepter extends Message {
 
   @Field(() => GroupWithMembers, { nullable: true })
   DiscussGroup?: GroupWithMembers;
+
+  @Field(()=> [FileExt])
+  files?: FileExt[];
 }
 @ObjectType({ description: "return type of writting subcription" })
 export class MessageWrittingObject {

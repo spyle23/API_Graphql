@@ -6,6 +6,7 @@ import { IsString } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { ResponseForm } from "../../Types/ResponseForm";
 import { FileInput } from "../postResolver/type";
+import { FileExt } from "@generated/type-graphql/models";
 
 @InputType({ description: "input for the comment" })
 export class CommentInput implements Partial<Comment> {
@@ -13,7 +14,7 @@ export class CommentInput implements Partial<Comment> {
   @Field()
   content: string;
 
-  @Field(()=> [FileInput])
+  @Field(() => [FileInput])
   files: FileInput[];
 }
 
@@ -24,6 +25,9 @@ export class CommentWithUser extends Comment {
 
   @Field(() => Post)
   Post?: Post;
+
+  @Field(() => [FileExt])
+  files?: FileExt[];
 }
 
 @ObjectType({ description: "response type for comment" })

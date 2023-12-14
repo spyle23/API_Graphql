@@ -7,12 +7,16 @@ import { ApolloError } from "apollo-server-express";
 @Resolver(Post)
 export class PostResolver {
   @Authorized()
-  @Query(() => [Post])
+  @Query(() => [PostDisplay])
   async postByUser(@Arg("userId") userId: number, @Ctx() ctx: Context) {
     try {
       const posts = await ctx.prisma.post.findMany({
         where: {
           userId: userId,
+        },
+        include: {
+          files: true,
+          reactions: true,
         },
       });
       return posts;
@@ -34,7 +38,7 @@ export class PostResolver {
       },
       take: limit,
       include: {
-        comments: true,
+        files: true,
         user: true,
         reactions: true,
       },

@@ -238,6 +238,10 @@ export class UserResolver {
         where: { id: userId },
         data: { friends: { delete: { id: friendId } } },
       });
+      await ctx.prisma.user.update({
+        where: { id: friendId },
+        data: { friends: { delete: { id: userId } } },
+      });
       return "delete friend success";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");

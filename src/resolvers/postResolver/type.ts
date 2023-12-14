@@ -41,4 +41,7 @@ export class PostDisplay extends Post {
 
   @Field(() => [Reaction], { nullable: true })
   reactions?: Reaction[];
+
+  @Field(()=> [FileExt])
+  files?: FileExt[];
 }

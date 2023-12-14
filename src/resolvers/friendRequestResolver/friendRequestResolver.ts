@@ -15,6 +15,7 @@ import { RequestStatus } from "@generated/type-graphql/enums";
 import { Context } from "../../context";
 import { ApolloError } from "apollo-server-express";
 import { UserResolver } from "../user/userResolver";
+import { FriendRequestExtend } from "./type";
 
 @Resolver(FriendRequest)
 export class FriendRequestResolver {
@@ -24,7 +25,7 @@ export class FriendRequestResolver {
       args,
       payload,
     }: ResolverFilterData<
-      { request: FriendRequest },
+      { request: FriendRequestExtend },
       { userId: number },
       Context
     >) => {
@@ -32,12 +33,12 @@ export class FriendRequestResolver {
     },
   })
   sendRequestNotif(
-    @Root("request") payload: FriendRequest,
+    @Root("request") payload: FriendRequestExtend,
     @Arg("userId") userId: number
-  ): FriendRequest {
+  ): FriendRequestExtend {
     return payload;
   }
-  @Query(() => [FriendRequest])
+  @Query(() => [FriendRequestExtend])
   async getRequest(
     @Arg("userId") userId: number,
     @Arg("cursor", { nullable: true }) cursor: number,
@@ -49,6 +50,9 @@ export class FriendRequestResolver {
         where: { receiverId: userId, status: RequestStatus.PENDING },
         take: limit,
         orderBy: { updatedAt: "desc" },
+        include: {
+          User: true,
+        },
       };
       const friendsRequest = await ctx.prisma.friendRequest.findMany(
         cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
@@ -71,6 +75,9 @@ export class FriendRequestResolver {
           User: { connect: { id: userId } },
           Receiver: { connect: { id: receiverId } },
           status: RequestStatus.PENDING,
+        },
+        include: {
+          User: true,
         },
       });
       pubSub.publish("SEND_REQUEST", { request });

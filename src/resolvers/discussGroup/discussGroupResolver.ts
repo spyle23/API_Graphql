@@ -3,11 +3,11 @@ import { DiscussGroup } from "@generated/type-graphql/models/DiscussGroup";
 import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../context";
 import { ApolloError } from "apollo-server-express";
-import { DiscussGroupInput, UserChoose, UserWithGroup } from "./type";
+import { DiscussGroupDiscussion, DiscussGroupInput, UserChoose, UserWithGroup } from "./type";
 
 @Resolver(DiscussGroup)
 export class DiscussGroupResolver {
-  @Mutation(() => DiscussGroup)
+  @Mutation(() => DiscussGroupDiscussion)
   async createDiscussGroup(
     @Arg("data") data: DiscussGroupInput,
     @Arg("userChoose") userChoose: UserChoose,
@@ -31,6 +31,9 @@ export class DiscussGroupResolver {
               User: { connect: { id: value } },
             })),
           },
+        },
+        include: {
+          Discussion: true,
         },
       });
       return group;

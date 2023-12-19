@@ -46,8 +46,8 @@ export const uploadFile = async (data: FileUpload[]): Promise<Partial<FileExt>[]
 
     const fileToSave: Partial<FileExt> = {
       name: filename,
-      url: await promise,
-      extension: type
+      url: await promise + `/${newFileName}`,
+      extension: mimetype
     }
 
     fileExt.push(fileToSave);

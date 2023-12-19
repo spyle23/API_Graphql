@@ -2,6 +2,7 @@
 import { Field, InputType, ObjectType } from "type-graphql";
 import {
   DiscussGroup,
+  Discussion,
   User,
   UserOnDiscussGroup,
 } from "@generated/type-graphql/models";
@@ -14,6 +15,11 @@ export class DiscussGroupInput implements Partial<DiscussGroup> {
 
   @Field({ nullable: true })
   coverPhoto?: string;
+}
+@ObjectType({ description: "discuss group with discussion" })
+export class DiscussGroupDiscussion extends DiscussGroup {
+  @Field(() => Discussion)
+  Discussion?: Discussion;
 }
 
 @InputType({ description: "user id in the group discuss" })

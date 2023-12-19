@@ -1,5 +1,6 @@
 import {
   Arg,
+  Authorized,
   Ctx,
   Mutation,
   PubSub,
@@ -10,12 +11,26 @@ import {
   Root,
   Subscription,
 } from "type-graphql";
-import { FriendRequest } from "@generated/type-graphql/models";
+import { FriendRequest, User } from "@generated/type-graphql/models";
 import { RequestStatus } from "@generated/type-graphql/enums";
 import { Context } from "../../context";
 import { ApolloError } from "apollo-server-express";
-import { UserResolver } from "../user/userResolver";
 import { FriendRequestExtend } from "./type";
+
+const findDuplicates = <T extends { id: number }>(arr: T[]) => {
+  const seen: Record<number, boolean> = {};
+  const duplicates: T[] = [];
+
+  for (const obj of arr) {
+    if (seen[obj.id]) {
+      duplicates.push(obj);
+    } else {
+      seen[obj.id] = true;
+    }
+  }
+
+  return duplicates;
+};
 
 @Resolver(FriendRequest)
 export class FriendRequestResolver {
@@ -38,6 +53,7 @@ export class FriendRequestResolver {
   ): FriendRequestExtend {
     return payload;
   }
+  @Authorized()
   @Query(() => [FriendRequestExtend])
   async getRequest(
     @Arg("userId") userId: number,
@@ -62,6 +78,113 @@ export class FriendRequestResolver {
       return new ApolloError("une erreur s'est produite");
     }
   }
+
+  @Authorized()
+  @Query(() => [User])
+  async getFriendOfCurrentUser(
+    @Arg("userId") userId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const filters: any = {
+        where: {
+          OR: [{ userId }, { receiverId: userId }],
+          status: RequestStatus.ACCEPTED,
+        },
+        include: {
+          User: true,
+          Receiver: true,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: limit,
+      };
+      const request = (await ctx.prisma.friendRequest.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      )) as (FriendRequest & { User: User; Receiver: User })[];
+      const friends = request.map((val) =>
+        val.User.id !== userId ? val.User : val.Receiver
+      );
+      return friends;
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Query(() => [User])
+  async getCommonFriends(
+    @Arg("userId") userId: number,
+    @Arg("receiverId") receiverId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const filters: any = {
+        where: {
+          status: RequestStatus.ACCEPTED,
+          OR: [
+            { userId, receiverId: { not: receiverId } },
+            { receiverId: userId, userId: { not: receiverId } },
+            { userId: receiverId, receiverId: { not: userId } },
+            { userId: { not: userId }, receiverId },
+          ],
+        },
+        include: {
+          User: true,
+          Receiver: true,
+        },
+        take: limit,
+      };
+      const friendsOfBoth = (await ctx.prisma.friendRequest.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      )) as (FriendRequest & { User: User; Receiver: User })[];
+      const friends = friendsOfBoth.map((i) =>
+        [userId, receiverId].includes(i.userId) ? i.Receiver : i.User
+      );
+      const finalCommon = findDuplicates(friends);
+      return finalCommon;
+    } catch (error) {
+      return new ApolloError("une Erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Query(() => [User])
+  async getSuggestionOfCurrentUser(
+    @Arg("userId") userId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const filters: any = {
+        where: {
+          friendRequest: {
+            some: {
+              status: RequestStatus.ACCEPTED,
+              OR: [
+                { userId: { not: userId } },
+                { receiverId: { not: userId } },
+              ],
+            },
+          },
+        },
+        take: limit,
+      };
+      const request = await ctx.prisma.user.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      );
+      return request;
+    } catch (error) {
+      return new ApolloError("une Erreur s'est produite");
+    }
+  }
+  @Authorized()
   @Mutation(() => String)
   async sendFriendRequest(
     @Arg("userId") userId: number,
@@ -87,6 +210,7 @@ export class FriendRequestResolver {
     }
   }
 
+  @Authorized()
   @Mutation(() => String)
   async handleFriendRequest(
     @Arg("friendRequestId") friendRequestId: number,
@@ -98,11 +222,24 @@ export class FriendRequestResolver {
         where: { id: friendRequestId },
         data: { status },
       });
-      if (status === RequestStatus.ACCEPTED) {
-        const user = new UserResolver();
-        await user.addFriends(request.userId, request.receiverId, ctx);
-      }
       return "friend request handle successfull";
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async deleteFriend(
+    @Arg("userId") userId: number,
+    @Arg("receiverId") receiverId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      await ctx.prisma.friendRequest.deleteMany({
+        where: { userId, receiverId },
+      });
+      return "friend deleted";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

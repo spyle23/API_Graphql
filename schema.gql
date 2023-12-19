@@ -10,16 +10,6 @@ type CallTypeObject {
   userId: Float!
 }
 
-type Comment {
-  _count: CommentCount
-  content: String!
-  createdAt: DateTime!
-  id: Int!
-  postId: Int!
-  updatedAt: DateTime!
-  userId: Int!
-}
-
 type CommentCount {
   files: Int!
 }
@@ -71,6 +61,18 @@ type DiscussGroupCount {
   members: Int!
 }
 
+"""discuss group with discussion"""
+type DiscussGroupDiscussion {
+  Discussion: Discussion!
+  _count: DiscussGroupCount
+  coverPhoto: String
+  createdAt: DateTime!
+  discussionId: Int!
+  groupName: String!
+  id: Int!
+  updatedAt: DateTime!
+}
+
 """user choose"""
 input DiscussGroupInput {
   coverPhoto: String
@@ -99,6 +101,7 @@ type DiscussionExtend {
   _count: DiscussionCount
   createdAt: DateTime!
   id: Int!
+  messages: [MessageWithRecepter!]!
   receiverId: Int
   theme: String!
   updatedAt: DateTime!
@@ -135,10 +138,10 @@ type FriendRequestExtend {
   User: User!
   createdAt: DateTime!
   id: Int!
-  receiverId: Int
+  receiverId: Int!
   status: RequestStatus!
   updatedAt: DateTime!
-  userId: Int
+  userId: Int!
 }
 
 """group with members"""
@@ -213,17 +216,16 @@ type MessageWrittingObject {
 }
 
 type Mutation {
-  addFriends(friendId: Float!, userId: Float!): String!
   addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
   callUser(receiverId: Float!, signal: String!, userId: Float!): String!
   changeTheme(data: DiscussionInput!): Discussion!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
-  createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!, userId: Float!): DiscussGroup!
+  createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!, userId: Float!): DiscussGroupDiscussion!
   createDiscussion(receiverId: Float!, userId: Float!): Discussion!
   createPost(data: PostInput!, userId: Float!): String!
   deleteComment(commentId: Float!, userId: Float!): String!
   deleteFile(url: String!): String!
-  deleteFriends(friendId: Float!, userId: Float!): String!
+  deleteFriend(receiverId: Float!, userId: Float!): String!
   deleteMessageById(messageId: Float!, userId: Float!): String!
   handleCallMutation(receiverId: Float!, signal: String!, status: Boolean!, userId: Float!): String!
   handleFriendRequest(friendRequestId: Float!, status: String!): String!
@@ -232,7 +234,7 @@ type Mutation {
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
   sendFriendRequest(receiverId: Float!, userId: Float!): String!
-  sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
+  sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): DiscussionExtend!
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
   upload(data: [Upload!]!): [FileExt!]!
@@ -266,11 +268,11 @@ type PostCount {
 """Form of post to display"""
 type PostDisplay {
   _count: PostCount
-  comments: [Comment!]
   createdAt: DateTime!
   description: String!
   files: [FileExt!]!
   id: Int!
+  nbComments: Float!
   reactions: [Reaction!]
   updatedAt: DateTime!
   user: User!
@@ -288,10 +290,12 @@ type Query {
   getAllGroupUser(userId: Float!): [DiscussGroup!]!
   getCommentByPost(cursor: Float, limit: Float = 10, postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
+  getCommonFriends(cursor: Float, limit: Float = 10, receiverId: Float!, userId: Float!): [User!]!
   getDiscussionCurrentUser(userId: Float!): [DiscussionExtend!]!
-  getFriends(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
+  getFriendOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
   getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequestExtend!]!
+  getSuggestionOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
   messageTwoUser(discussionId: Float!): [MessageWithRecepter!]!
   postByUser(userId: Float!): [PostDisplay!]!
   profile(userId: Float!): UserDetails
@@ -376,7 +380,6 @@ type User {
   password: String!
   photo: String
   updatedAt: DateTime!
-  userId: Int
 }
 
 """user id in the group discuss"""
@@ -389,7 +392,6 @@ type UserCount {
   comments: Int!
   discussions: Int!
   friendRequest: Int!
-  friends: Int!
   groupes: Int!
   messages: Int!
   notifications: Int!
@@ -413,7 +415,6 @@ type UserDetails {
   password: String!
   photo: String
   updatedAt: DateTime!
-  userId: Int
 }
 
 type UserOnDiscussGroup {
@@ -436,7 +437,6 @@ type UserWithStatus {
   photo: String
   status: Boolean!
   updatedAt: DateTime!
-  userId: Int
 }
 
 """User with token"""
@@ -452,5 +452,4 @@ type UserWithToken {
   photo: String
   token: String!
   updatedAt: DateTime!
-  userId: Int
 }

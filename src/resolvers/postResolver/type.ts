@@ -36,8 +36,8 @@ export class PostDisplay extends Post {
   @Field(() => User)
   user: User;
 
-  @Field(() => [Comment], { nullable: true })
-  comments?: Comment[];
+  @Field()
+  nbComments: number;
 
   @Field(() => [Reaction], { nullable: true })
   reactions?: Reaction[];

@@ -24,9 +24,9 @@ const PORT = process.env.PORT || 4000;
   const app = express();
   app.use(cors());
   app.use(graphQLUploadExpress());
-  app.use("/image", express.static(__dirname + "/uploads/image"));
-  app.use("/video", express.static(__dirname + "/uploads/video"));
-  app.use("/pdf", express.static(__dirname + "/uploads/application"));
+  app.use("/uploads/image", express.static(__dirname + "/uploads/image"));
+  app.use("/uploads/video", express.static(__dirname + "/uploads/video"));
+  app.use("/uploads/application", express.static(__dirname + "/uploads/application"));
 
   const httpServer = createServer(app);
   const schema = await tq.buildSchema({

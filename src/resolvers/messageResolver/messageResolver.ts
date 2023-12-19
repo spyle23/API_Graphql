@@ -33,21 +33,19 @@ export class MessageResolver {
       payload,
       args,
       context,
-    }: ResolverFilterData<any, any, Context>) => {
-      const currentUser = await context.prisma.user.findUnique({
-        where: { id: args.userId },
-        include: { groupes: true },
-      });
-      if (payload.message.discussGroupId) {
-        return currentUser.groupes.find(
-          ({ discussGroupId }) =>
-            discussGroupId === payload.message.discussGroupId &&
-            payload.message.userId !== args.userId
+    }: ResolverFilterData<
+      { message: DiscussionExtend },
+      { userId: number },
+      Context
+    >) => {
+      if (payload.message.DiscussGroup) {
+        return payload.message.DiscussGroup.members.find(
+          (i) => i.userId === args.userId
         )
           ? true
           : false;
       }
-      return payload.message.receiverId === args.userId;
+      return payload.message.messages[0].receiverId === args.userId;
     },
   })
   messageToUser(
@@ -125,6 +123,33 @@ export class MessageResolver {
       userId: payload.userId,
       isWritting: payload.isWritting,
     };
+  }
+
+  @Authorized()
+  @Query(() => [MessageWithRecepter])
+  async messageTwoUser(
+    @Arg("discussionId") discussionId: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const messages = await ctx.prisma.message.findMany({
+        where: { discussionId },
+        include: {
+          User: true,
+          Receiver: true,
+          files: true,
+          DiscussGroup: {
+            include: {
+              members: true,
+            },
+          },
+        },
+      });
+      return messages;
+    } catch (error) {
+      console.log(error);
+      return new ApolloError("une erreur s'est produite");
+    }
   }
 
   @Authorized()
@@ -235,7 +260,7 @@ export class MessageResolver {
   // }
 
   @Authorized()
-  @Mutation(() => MessageResponse)
+  @Mutation(() => DiscussionExtend)
   async sendMessageDiscoussGroup(
     @Arg("messageInput") messageInput: MessageInput,
     @Arg("userId") userId: number,
@@ -298,16 +323,27 @@ export class MessageResolver {
       });
       const discussion = await ctx.prisma.discussion.findUnique({
         where: { id: discussionId },
-        include: { User: true, Receiver: true, DiscussGroup: true },
+        include: {
+          User: true,
+          Receiver: true,
+          DiscussGroup: true,
+          messages: {
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+            include: {
+              files: true,
+              User: true,
+              DiscussGroup: true,
+              Receiver: true,
+            },
+          },
+        },
       });
       if (discussion) {
         await pubSub.publish("SEND_MESSAGE", {
           message: discussion,
         });
-        return {
-          message: "message envoyé",
-          success: true,
-        } as MessageResponse;
+        return discussion;
       }
     } catch (error) {
       console.log(error);
@@ -343,33 +379,6 @@ export class MessageResolver {
         success: true,
       } as MessageResponse;
     } catch (error) {
-      return new ApolloError("une erreur s'est produite");
-    }
-  }
-
-  @Authorized()
-  @Query(() => [MessageWithRecepter])
-  async messageTwoUser(
-    @Arg("discussionId") discussionId: number,
-    @Ctx() ctx: Context
-  ) {
-    try {
-      const messages = await ctx.prisma.message.findMany({
-        where: { discussionId },
-        include: {
-          User: true,
-          Receiver: true,
-          files: true,
-          DiscussGroup: {
-            include: {
-              members: true,
-            },
-          },
-        },
-      });
-      return messages;
-    } catch (error) {
-      console.log(error);
       return new ApolloError("une erreur s'est produite");
     }
   }

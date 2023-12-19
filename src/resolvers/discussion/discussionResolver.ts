@@ -28,6 +28,10 @@ export class DiscussionResolver {
             orderBy: {
               updatedAt: "desc",
             },
+            include: {
+              files: true,
+              User: true,
+            },
             take: 1,
           },
           DiscussGroup: {
@@ -40,7 +44,7 @@ export class DiscussionResolver {
           updatedAt: "desc",
         },
       });
-      return discussions;
+      return discussions.filter((item) => item.messages.length === 1);
     } catch (error) {
       return new ApolloError("Une erreur s'est produite");
     }

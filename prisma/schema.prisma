@@ -34,7 +34,6 @@ model User {
     password            String
     photo               String?              @db.Text
     civilite            String?
-    friends             User[]               @relation(name: "friends")
     createdAt           DateTime             @default(now())
     updatedAt           DateTime             @updatedAt
     Post                Post[]
@@ -48,17 +47,15 @@ model User {
     groupes             UserOnDiscussGroup[]
     reactions           Reaction[]
     notifications       Notification[]
-    User                User?                @relation(fields: [userId], references: [id], name: "friends")
-    userId              Int?
 }
 
 model FriendRequest {
     id         Int           @id @default(autoincrement())
     status     RequestStatus
-    Receiver   User?         @relation(fields: [receiverId], references: [id], name: "request-received")
-    receiverId Int?
-    User       User?         @relation(fields: [userId], references: [id], name: "request-send")
-    userId     Int?
+    Receiver   User         @relation(fields: [receiverId], references: [id], name: "request-received")
+    receiverId Int
+    User       User         @relation(fields: [userId], references: [id], name: "request-send")
+    userId     Int
     createdAt  DateTime      @default(now())
     updatedAt  DateTime      @updatedAt
 }

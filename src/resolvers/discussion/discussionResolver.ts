@@ -1,4 +1,13 @@
-import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  Mutation,
+  PubSub,
+  PubSubEngine,
+  Query,
+  Resolver,
+} from "type-graphql";
 import { Discussion } from "@generated/type-graphql/models/Discussion";
 import { Context } from "../../context";
 import { DiscussionExtend, DiscussionInput } from "./type";
@@ -52,13 +61,33 @@ export class DiscussionResolver {
 
   @Authorized()
   @Mutation(() => Discussion)
-  async changeTheme(@Arg("data") data: DiscussionInput, @Ctx() ctx: Context) {
+  async changeTheme(
+    @Arg("data") data: DiscussionInput,
+    @Ctx() ctx: Context,
+    @PubSub() pubub: PubSubEngine
+  ) {
     try {
       const { id, theme } = data;
       const discussion = await ctx.prisma.discussion.update({
         data: { theme },
         where: { id },
+        include: {
+          User: true,
+          Receiver: true,
+          DiscussGroup: true,
+          messages: {
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+            include: {
+              files: true,
+              User: true,
+              DiscussGroup: true,
+              Receiver: true,
+            },
+          },
+        },
       });
+      await pubub.publish("SEND_MESSAGE", { message: discussion });
       return discussion;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");

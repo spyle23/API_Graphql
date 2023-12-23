@@ -111,7 +111,9 @@ type DiscussionExtend {
 """input for changing theme discussion"""
 input DiscussionInput {
   id: Float!
+  receiverId: Float
   theme: String!
+  userId: Float!
 }
 
 type FileExt {
@@ -211,8 +213,9 @@ type MessageWithRecepter {
 
 """return type of writting subcription"""
 type MessageWrittingObject {
+  discussionId: Float!
   isWritting: Boolean!
-  userId: Float!
+  user: User!
 }
 
 type Mutation {
@@ -238,7 +241,7 @@ type Mutation {
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
   upload(data: [Upload!]!): [FileExt!]!
-  writtingCheck(discussGroupId: Float, isWritting: Boolean!, receiverId: Float, userId: Float!): MessageResponse!
+  writtingCheck(discussionId: Float!, isWritting: Boolean!, userId: Float!): MessageResponse!
 }
 
 type Notification {
@@ -352,6 +355,7 @@ type Subscription {
   getStatusUser(userId: Float!): UserWithStatus!
   handleCall(userId: Float!): ResponseCallType!
   listenCall(userId: Float!): CallTypeObject!
+  listenTheme(userId: Float!): DiscussionExtend!
   messageToUser(userId: Float!): DiscussionExtend!
   sendRequestNotif(userId: Float!): FriendRequestExtend!
   writeMessage(userId: Float!): MessageWrittingObject!

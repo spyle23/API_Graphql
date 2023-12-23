@@ -7,6 +7,9 @@ import {
   PubSubEngine,
   Query,
   Resolver,
+  ResolverFilterData,
+  Root,
+  Subscription,
 } from "type-graphql";
 import { Discussion } from "@generated/type-graphql/models/Discussion";
 import { Context } from "../../context";
@@ -15,6 +18,32 @@ import { ApolloError } from "apollo-server-express";
 
 @Resolver(Discussion)
 export class DiscussionResolver {
+  @Subscription({
+    topics: "LISTEN_THEME",
+    filter: ({
+      args,
+      payload,
+    }: ResolverFilterData<
+      { params: DiscussionInput; discussion: DiscussionExtend },
+      { userId: number }
+    >) => {
+      if (payload.params.receiverId) {
+        return args.userId === payload.params.receiverId;
+      }
+      return payload.discussion.DiscussGroup.members.find(
+        (i) => i.userId === args.userId
+      )
+        ? true
+        : false;
+    },
+  })
+  listenTheme(
+    @Root("params") payload: DiscussionInput,
+    @Root("discussion") discussion: DiscussionExtend,
+    @Arg("userId") userId: number
+  ): DiscussionExtend {
+    return discussion;
+  }
   @Authorized()
   @Query(() => [DiscussionExtend])
   async getDiscussionCurrentUser(
@@ -74,7 +103,11 @@ export class DiscussionResolver {
         include: {
           User: true,
           Receiver: true,
-          DiscussGroup: true,
+          DiscussGroup: {
+            include: {
+              members: true,
+            },
+          },
           messages: {
             orderBy: { updatedAt: "desc" },
             take: 1,
@@ -87,7 +120,7 @@ export class DiscussionResolver {
           },
         },
       });
-      await pubub.publish("SEND_MESSAGE", { message: discussion });
+      await pubub.publish("LISTEN_THEME", { params: data, discussion });
       return discussion;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");

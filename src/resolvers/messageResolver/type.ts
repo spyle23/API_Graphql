@@ -42,18 +42,12 @@ export class MessageWithRecepter extends Message {
 }
 @ObjectType({ description: "return type of writting subcription" })
 export class MessageWrittingObject {
+  @Field(()=> User)
+  user: User;
   @Field()
-  userId: number;
+  discussionId: number;
   @Field()
   isWritting: boolean;
-}
-
-@ObjectType({ description: "params for fitering the writting subscription" })
-export class MessageWritting extends MessageWrittingObject{
-  @Field(() => Number, { nullable: true })
-  receiverId?: number;
-  @Field(() => DiscussGroup, { nullable: true })
-  discussGroup?: DiscussGroup;
 }
 @ObjectType({ description: "message response type" })
 export class MessageResponse extends ResponseForm<Message[]> {

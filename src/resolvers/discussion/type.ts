@@ -24,5 +24,11 @@ export class DiscussionInput implements Partial<Discussion> {
     id?: number;
 
     @Field()
+    userId?: number;
+
+    @Field({ nullable: true })
+    receiverId?: number;
+
+    @Field()
     theme?: string;
 }

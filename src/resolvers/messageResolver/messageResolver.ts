@@ -18,7 +18,6 @@ import {
   MessageInput,
   MessageResponse,
   MessageWithRecepter,
-  MessageWritting,
   MessageWrittingObject,
   ResponseCallType,
 } from "./type";
@@ -97,31 +96,51 @@ export class MessageResolver {
 
   @Subscription({
     topics: "WRITE_MESSAGE",
-    filter: ({
+    filter: async ({
       payload,
       args,
+      context,
     }: ResolverFilterData<
-      { write: MessageWritting },
+      { write: MessageWrittingObject },
       { userId: number },
       Context
     >) => {
-      if (payload.write.discussGroup) {
-        return payload.write.discussGroup.members.find(
+      const discussion = await context.prisma.discussion.findFirst({
+        where: { id: payload.write.discussionId },
+        include: {
+          DiscussGroup: {
+            include: {
+              members: true,
+            },
+          },
+          User: true,
+          Receiver: true,
+        },
+      });
+      if (args.userId === payload.write.user.id) return false;
+      if (discussion.DiscussGroup) {
+        return discussion.DiscussGroup.members.find(
           (i) => i.userId === args.userId
         )
           ? true
           : false;
       }
-      return payload.write.receiverId === args.userId;
+      return [discussion.userId, discussion.receiverId as number].includes(
+        args.userId
+      )
+        ? true
+        : false;
     },
   })
   writeMessage(
-    @Root("write") payload: MessageWritting,
+    @Root("write") payload: MessageWrittingObject,
     @Arg("userId") userId: number
   ): MessageWrittingObject {
+    console.log("mandeha ato ve")
     return {
-      userId: payload.userId,
+      user: payload.user,
       isWritting: payload.isWritting,
+      discussionId: payload.discussionId,
     };
   }
 
@@ -355,22 +374,16 @@ export class MessageResolver {
   @Mutation(() => MessageResponse)
   async writtingCheck(
     @Arg("userId") userId: number,
-    @Arg("receiverId", { nullable: true }) receiverId: number,
-    @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
+    @Arg("discussionId") discussionId: number,
     @Arg("isWritting") isWritting: boolean,
     @Ctx() ctx: Context,
     @PubSub() pubsub: PubSubEngine
   ) {
     try {
-      const discussGroup = discussGroupId
-        ? await ctx.prisma.discussGroup.findUnique({
-            where: { id: discussGroupId },
-          })
-        : null;
+      const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
       const payload = {
-        userId,
-        receiverId,
-        discussGroup,
+        user,
+        discussionId,
         isWritting,
       };
       await pubsub.publish("WRITE_MESSAGE", { write: payload });

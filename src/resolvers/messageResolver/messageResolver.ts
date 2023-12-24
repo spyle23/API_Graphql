@@ -136,7 +136,6 @@ export class MessageResolver {
     @Root("write") payload: MessageWrittingObject,
     @Arg("userId") userId: number
   ): MessageWrittingObject {
-    console.log("mandeha ato ve")
     return {
       user: payload.user,
       isWritting: payload.isWritting,
@@ -345,7 +344,11 @@ export class MessageResolver {
         include: {
           User: true,
           Receiver: true,
-          DiscussGroup: true,
+          DiscussGroup: {
+            include: {
+              members: true,
+            },
+          },
           messages: {
             orderBy: { updatedAt: "desc" },
             take: 1,

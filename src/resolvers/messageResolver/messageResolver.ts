@@ -11,7 +11,13 @@ import {
   Root,
   Subscription,
 } from "type-graphql";
-import { Message } from "@generated/type-graphql/models/Message";
+import {
+  Message,
+  FileExt,
+  User,
+  DiscussGroup,
+  UserOnDiscussGroup,
+} from "@generated/type-graphql/models";
 import { Context } from "../../context";
 import {
   CallTypeObject,
@@ -147,23 +153,32 @@ export class MessageResolver {
   @Query(() => [MessageWithRecepter])
   async messageTwoUser(
     @Arg("discussionId") discussionId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
     @Ctx() ctx: Context
   ) {
     try {
-      const messages = await ctx.prisma.message.findMany({
+      const filters: any = {
         where: { discussionId },
         include: {
           User: true,
           Receiver: true,
           files: true,
-          DiscussGroup: {
-            include: {
-              members: true,
-            },
-          },
+          DiscussGroup: true,
         },
-      });
-      return messages;
+        orderBy: { id: "desc" },
+        take: limit,
+      };
+      const messages = (await ctx.prisma.message.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      )) as (Message & {
+        User: User;
+        Receiver?: User;
+        files: FileExt[];
+        DiscussGroup: DiscussGroup;
+      })[];
+      const sortedMessages = messages.sort((a, b) => a.id - b.id);
+      return sortedMessages;
     } catch (error) {
       console.log(error);
       return new ApolloError("une erreur s'est produite");

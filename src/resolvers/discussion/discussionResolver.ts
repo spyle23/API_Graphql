@@ -11,7 +11,14 @@ import {
   Root,
   Subscription,
 } from "type-graphql";
-import { Discussion } from "@generated/type-graphql/models/Discussion";
+import {
+  Discussion,
+  User,
+  Message,
+  DiscussGroup,
+  UserOnDiscussGroup,
+  FileExt,
+} from "@generated/type-graphql/models";
 import { Context } from "../../context";
 import { DiscussionExtend, DiscussionInput } from "./type";
 import { ApolloError } from "apollo-server-express";
@@ -48,10 +55,12 @@ export class DiscussionResolver {
   @Query(() => [DiscussionExtend])
   async getDiscussionCurrentUser(
     @Arg("userId") userId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
     @Ctx() ctx: Context
   ) {
     try {
-      const discussions = await ctx.prisma.discussion.findMany({
+      const filters: any = {
         where: {
           OR: [
             { userId },
@@ -64,7 +73,7 @@ export class DiscussionResolver {
           Receiver: true,
           messages: {
             orderBy: {
-              updatedAt: "desc",
+              id: "desc",
             },
             include: {
               files: true,
@@ -78,10 +87,19 @@ export class DiscussionResolver {
             },
           },
         },
+        take: limit,
         orderBy: {
-          updatedAt: "desc",
+          id: "desc",
         },
-      });
+      };
+      const discussions = (await ctx.prisma.discussion.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      )) as (Discussion & {
+        User: User;
+        Receiver?: User;
+        messages: Message & { files: FileExt[]; User: User };
+        DiscussGroup?: DiscussGroup & { members: UserOnDiscussGroup[] };
+      })[];
       return discussions.filter((item) => item.messages.length === 1);
     } catch (error) {
       return new ApolloError("Une erreur s'est produite");

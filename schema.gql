@@ -294,12 +294,12 @@ type Query {
   getCommentByPost(cursor: Float, limit: Float = 10, postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
   getCommonFriends(cursor: Float, limit: Float = 10, receiverId: Float!, userId: Float!): [User!]!
-  getDiscussionCurrentUser(userId: Float!): [DiscussionExtend!]!
+  getDiscussionCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [DiscussionExtend!]!
   getFriendOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
   getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequestExtend!]!
   getSuggestionOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
-  messageTwoUser(discussionId: Float!): [MessageWithRecepter!]!
+  messageTwoUser(cursor: Float, discussionId: Float!, limit: Float = 10): [MessageWithRecepter!]!
   postByUser(userId: Float!): [PostDisplay!]!
   profile(userId: Float!): UserDetails
 }

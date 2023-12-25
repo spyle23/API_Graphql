@@ -296,6 +296,7 @@ type Query {
   getCommonFriends(cursor: Float, limit: Float = 10, receiverId: Float!, userId: Float!): [User!]!
   getDiscussionCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [DiscussionExtend!]!
   getFriendOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
+  getNotifications(cursor: Float, limit: Float = 10, userId: Float!): [Notification!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
   getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequestExtend!]!
   getSuggestionOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!

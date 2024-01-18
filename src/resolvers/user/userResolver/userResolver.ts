@@ -20,7 +20,6 @@ import {
   SignupInput,
   UpdateUserInput,
   UserDetails,
-  UserWithStatus,
 } from "./type";
 import { authToken } from "../../../authToken";
 import { RequestStatus } from "@generated/type-graphql/enums";
@@ -34,7 +33,7 @@ export class UserResolver {
       payload,
       context,
     }: ResolverFilterData<
-      { userLogin: UserWithStatus },
+      { userLogin: User },
       { userId: number },
       Context
     >) => {
@@ -51,9 +50,9 @@ export class UserResolver {
     },
   })
   getStatusUser(
-    @Root("userLogin") payload: UserWithStatus,
+    @Root("userLogin") payload: User,
     @Arg("userId") userId: number
-  ): UserWithStatus {
+  ): User {
     return payload;
   }
   @Authorized()
@@ -77,7 +76,7 @@ export class UserResolver {
         },
         include: {
           Post: true,
-          notifications: true
+          notifications: true,
         },
       });
       return user;
@@ -102,6 +101,7 @@ export class UserResolver {
       const newUser = await ctx.prisma.user.create({
         data: {
           ...userInput,
+          status: true,
           password: hashpasswd,
         },
       });
@@ -147,16 +147,20 @@ export class UserResolver {
         return new ApolloError(
           "Le mot de passe que vous avez entré est incorrect"
         );
+      const newUser = await ctx.prisma.user.update({
+        where: { email },
+        data: { status: true },
+      });
       const token = authToken.sign(user);
       const response: LoginResponseForm = {
         message: "Vous êtes authentifié",
         success: true,
         data: {
-          ...user,
+          ...newUser,
           token,
         },
       };
-      pubsub.publish("STATUS", { userLogin: { ...user, status: true } });
+      pubsub.publish("STATUS", { userLogin: newUser });
       return response;
     } catch (error) {
       console.log(error);
@@ -186,15 +190,19 @@ export class UserResolver {
 
   @Authorized()
   @Mutation(() => String)
-  async logout(
+  async changeStatus(
     @Arg("userId") userId: number,
+    @Arg("status") status: boolean,
     @PubSub() pubsub: PubSubEngine,
     @Ctx() ctx: Context
   ) {
     try {
-      const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
-      pubsub.publish("STATUS", { userLogin: { ...user, status: false } });
-      return "logout success";
+      const user = await ctx.prisma.user.update({
+        where: { id: userId },
+        data: { status },
+      });
+      pubsub.publish("STATUS", { userLogin: user });
+      return "status success";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

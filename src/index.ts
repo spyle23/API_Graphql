@@ -13,7 +13,7 @@ import { useServer } from "graphql-ws/lib/use/ws";
 import { customAuthChecker } from "./authChecker";
 import graphQLUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
 import { fileURLToPath } from "url";
-import path from "path"; 
+import path from "path";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -26,7 +26,10 @@ const PORT = process.env.PORT || 4000;
   app.use(graphQLUploadExpress());
   app.use("/uploads/image", express.static(__dirname + "/uploads/image"));
   app.use("/uploads/video", express.static(__dirname + "/uploads/video"));
-  app.use("/uploads/application", express.static(__dirname + "/uploads/application"));
+  app.use(
+    "/uploads/application",
+    express.static(__dirname + "/uploads/application")
+  );
 
   const httpServer = createServer(app);
   const schema = await tq.buildSchema({

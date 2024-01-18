@@ -49,12 +49,6 @@ export class UserDetails extends User {
   notifications?: Notification[];
 }
 
-@ObjectType({ description: "Return type of user for status online" })
-export class UserWithStatus extends User {
-  @Field()
-  status: boolean;
-}
-
 @InputType({ description: "input for update user" })
 export class UpdateUserInput implements Partial<User> {
   @Field({ nullable: true })

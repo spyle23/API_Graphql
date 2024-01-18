@@ -9,6 +9,7 @@ import { UserResolver } from "./user/userResolver/userResolver";
 import { DiscussionResolver } from "./discussion";
 import { FriendRequestResolver } from "./friendRequestResolver";
 import { NotificationResolver } from "./notificationResolver";
+import { VideoCallResolver } from "./videoCallResolver";
 
 export const resolvers = [
   UserResolver,
@@ -22,4 +23,5 @@ export const resolvers = [
   FileResolver,
   DiscussGroupResolver,
   ReactionResolver,
+  VideoCallResolver,
 ] as NonEmptyArray<Function> | NonEmptyArray<string>;

@@ -84,6 +84,7 @@ export class FriendRequestResolver {
   async getFriendOfCurrentUser(
     @Arg("userId") userId: number,
     @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("status", { nullable: true }) status: boolean,
     @Arg("limit", { defaultValue: 10 }) limit: number,
     @Ctx() ctx: Context
   ) {
@@ -105,10 +106,10 @@ export class FriendRequestResolver {
       const request = (await ctx.prisma.friendRequest.findMany(
         cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
       )) as (FriendRequest & { User: User; Receiver: User })[];
-      const friends = request.map((val) =>
+      const friends = request.map<User>((val) =>
         val.User.id !== userId ? val.User : val.Receiver
       );
-      return friends;
+      return status ? friends.filter((i) => i.status) : friends;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }
@@ -162,17 +163,33 @@ export class FriendRequestResolver {
     @Ctx() ctx: Context
   ) {
     try {
-      const filters: any = {
-        where: {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
           friendRequest: {
-            some: {
-              status: RequestStatus.ACCEPTED,
+            where: {
               OR: [
-                { userId: { not: userId } },
-                { receiverId: { not: userId } },
+                { status: RequestStatus.ACCEPTED },
+                { status: RequestStatus.PENDING },
               ],
             },
           },
+          request: {
+            where: {
+              OR: [
+                { status: RequestStatus.ACCEPTED },
+                { status: RequestStatus.PENDING },
+              ],
+            },
+          },
+        },
+      });
+      const friendRequestId = user.friendRequest.map((i) => i.userId);
+      const requestId = user.request.map((i) => i.receiverId);
+      const friendsId = [...friendRequestId, ...requestId];
+      const filters: any = {
+        where: {
+          id: { notIn: [userId, ...friendsId] },
         },
         take: limit,
       };
@@ -215,13 +232,32 @@ export class FriendRequestResolver {
   async handleFriendRequest(
     @Arg("friendRequestId") friendRequestId: number,
     @Arg("status") status: RequestStatus,
+    @PubSub() pubSub: PubSubEngine,
     @Ctx() ctx: Context
   ) {
     try {
       const request = await ctx.prisma.friendRequest.update({
         where: { id: friendRequestId },
         data: { status },
+        include: {
+          Receiver: true,
+        },
       });
+      if (status === RequestStatus.ACCEPTED) {
+        console.log("ato");
+        const notification = await ctx.prisma.notification.create({
+          data: {
+            name: "invitation",
+            description: `${request.Receiver.firstname} ${request.Receiver.lastname} a confirmé votre invitation`,
+            User: {
+              connect: {
+                id: friendRequestId,
+              },
+            },
+          },
+        });
+        await pubSub.publish("NOTIFICATION", notification);
+      }
       return "friend request handle successfull";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");

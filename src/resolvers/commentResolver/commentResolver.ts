@@ -73,7 +73,10 @@ export class CommentResolver {
       const response: CommentResponse = {
         message: "liste des commentaires par l'utilisateur",
         success: true,
-        data: comments,
+        data: comments.map((i) => ({
+          ...i,
+          User: { ...i.User, status: false },
+        })),
       };
       return response;
     } catch (error) {

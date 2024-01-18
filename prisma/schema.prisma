@@ -26,9 +26,15 @@ enum RequestStatus {
     DENIED
 }
 
+enum CallStatus {
+    PENDING
+    ENDED
+}
+
 model User {
     id                  Int                  @id @default(autoincrement())
     email               String               @unique
+    status              Boolean              @default(false)
     firstname           String?
     lastname            String?
     password            String
@@ -47,14 +53,16 @@ model User {
     groupes             UserOnDiscussGroup[]
     reactions           Reaction[]
     notifications       Notification[]
+    VideoCall           VideoCall?           @relation(fields: [videoCallId], references: [id])
+    videoCallId         Int?
 }
 
 model FriendRequest {
     id         Int           @id @default(autoincrement())
     status     RequestStatus
-    Receiver   User         @relation(fields: [receiverId], references: [id], name: "request-received")
+    Receiver   User          @relation(fields: [receiverId], references: [id], name: "request-received")
     receiverId Int
-    User       User         @relation(fields: [userId], references: [id], name: "request-send")
+    User       User          @relation(fields: [userId], references: [id], name: "request-send")
     userId     Int
     createdAt  DateTime      @default(now())
     updatedAt  DateTime      @updatedAt
@@ -71,6 +79,7 @@ model Discussion {
     receiverId   Int?
     createdAt    DateTime      @default(now())
     updatedAt    DateTime      @updatedAt
+    VideoCall    VideoCall?
 }
 
 model FileExt {
@@ -170,4 +179,14 @@ model Notification {
     updatedAt   DateTime @updatedAt
     User        User?    @relation(fields: [userId], references: [id])
     userId      Int?
+}
+
+model VideoCall {
+    id           Int        @id @default(autoincrement())
+    status       CallStatus @default(PENDING)
+    members      User[]
+    discussion   Discussion @relation(fields: [discussionId], references: [id])
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @updatedAt
+    discussionId Int        @unique
 }

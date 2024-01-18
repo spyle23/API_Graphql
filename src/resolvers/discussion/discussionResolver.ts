@@ -138,7 +138,16 @@ export class DiscussionResolver {
           },
         },
       });
-      await pubub.publish("LISTEN_THEME", { params: data, discussion });
+      await pubub.publish("LISTEN_THEME", {
+        params: data,
+        discussion: {
+          ...discussion,
+          User: { ...discussion.User, status: true },
+          Receiver: discussion.Receiver
+            ? { ...discussion.Receiver, status: true }
+            : null,
+        },
+      });
       return discussion;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
@@ -146,7 +155,7 @@ export class DiscussionResolver {
   }
 
   @Authorized()
-  @Mutation(() => Discussion)
+  @Mutation(() => DiscussionExtend)
   async createDiscussion(
     @Arg("userId") userId: number,
     @Arg("receiverId") receiverId: number,
@@ -160,6 +169,25 @@ export class DiscussionResolver {
             { receiverId: userId, userId: receiverId },
           ],
         },
+        include: {
+          User: true,
+          Receiver: true,
+          DiscussGroup: {
+            include: {
+              members: true,
+            },
+          },
+          messages: {
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+            include: {
+              files: true,
+              User: true,
+              DiscussGroup: true,
+              Receiver: true,
+            },
+          },
+        },
       });
       return (
         discussion ??
@@ -167,6 +195,25 @@ export class DiscussionResolver {
           data: {
             User: { connect: { id: userId } },
             Receiver: { connect: { id: receiverId } },
+          },
+          include: {
+            User: true,
+            Receiver: true,
+            DiscussGroup: {
+              include: {
+                members: true,
+              },
+            },
+            messages: {
+              orderBy: { updatedAt: "desc" },
+              take: 1,
+              include: {
+                files: true,
+                User: true,
+                DiscussGroup: true,
+                Receiver: true,
+              },
+            },
           },
         }))
       );

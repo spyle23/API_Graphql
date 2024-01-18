@@ -3,11 +3,9 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
-"""payload for call video stream"""
-type CallTypeObject {
-  receiverId: Float!
-  signal: String!
-  userId: Float!
+enum CallStatus {
+  ENDED
+  PENDING
 }
 
 type CommentCount {
@@ -158,6 +156,12 @@ type GroupWithMembers {
   updatedAt: DateTime!
 }
 
+"""return type for listen call"""
+type ListenCallObject {
+  discussion: DiscussionExtend!
+  token: String!
+}
+
 """Login response with token"""
 type LoginResponseForm {
   data: UserWithToken
@@ -220,24 +224,27 @@ type MessageWrittingObject {
 
 type Mutation {
   addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
-  callUser(receiverId: Float!, signal: String!, userId: Float!): String!
+  callUser(discussionId: Float!, userId: Float!): String!
+  changeStatus(status: Boolean!, userId: Float!): String!
   changeTheme(data: DiscussionInput!): Discussion!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!, userId: Float!): DiscussGroupDiscussion!
-  createDiscussion(receiverId: Float!, userId: Float!): Discussion!
+  createDiscussion(receiverId: Float!, userId: Float!): DiscussionExtend!
   createPost(data: PostInput!, userId: Float!): String!
   deleteComment(commentId: Float!, userId: Float!): String!
   deleteFile(url: String!): String!
   deleteFriend(receiverId: Float!, userId: Float!): String!
   deleteMessageById(messageId: Float!, userId: Float!): String!
-  handleCallMutation(receiverId: Float!, signal: String!, status: Boolean!, userId: Float!): String!
+  handleCallMutation(status: Boolean!, token: String!, userId: Float!): String!
   handleFriendRequest(friendRequestId: Float!, status: String!): String!
+  leaveCall(token: String!, userId: Float!): String!
   login(email: String!, password: String!): LoginResponseForm!
-  logout(userId: Float!): String!
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
+  returnSignal(receiverId: Float!, signal: String!, userId: Float!): String!
   sendFriendRequest(receiverId: Float!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): DiscussionExtend!
+  sendSignal(receiverId: Float!, signal: String!, userId: Float!): String!
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
   upload(data: [Upload!]!): [FileExt!]!
@@ -295,11 +302,12 @@ type Query {
   getCommentByUser(userId: Float!): CommentResponse!
   getCommonFriends(cursor: Float, limit: Float = 10, receiverId: Float!, userId: Float!): [User!]!
   getDiscussionCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [DiscussionExtend!]!
-  getFriendOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
+  getFriendOfCurrentUser(cursor: Float, limit: Float = 10, status: Boolean, userId: Float!): [User!]!
   getNotifications(cursor: Float, limit: Float = 10, userId: Float!): [Notification!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
   getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequestExtend!]!
   getSuggestionOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
+  getVideoCall(token: String!, userId: Float!): VideoCallMembers!
   messageTwoUser(cursor: Float, discussionId: Float!, limit: Float = 10): [MessageWithRecepter!]!
   postByUser(userId: Float!): [PostDisplay!]!
   profile(userId: Float!): UserDetails
@@ -334,11 +342,10 @@ enum RequestStatus {
   PENDING
 }
 
-"""payload for handle video call """
-type ResponseCallType {
+"""send signal type"""
+type SendSignalType {
   receiverId: Float!
   signal: String!
-  status: Boolean!
   userId: Float!
 }
 
@@ -353,9 +360,12 @@ input SignupInput {
 
 type Subscription {
   commentPost(userId: Float!): Notification!
-  getStatusUser(userId: Float!): UserWithStatus!
-  handleCall(userId: Float!): ResponseCallType!
-  listenCall(userId: Float!): CallTypeObject!
+  deniedCall(userId: Float!): String!
+  getStatusUser(userId: Float!): User!
+  lisenLeaveCall(userId: Float!): User!
+  lisenReturnSignal(userId: Float!): SendSignalType!
+  lisenSendSignal(userId: Float!): SendSignalType!
+  listenCall(userId: Float!): ListenCallObject!
   listenTheme(userId: Float!): DiscussionExtend!
   messageToUser(userId: Float!): DiscussionExtend!
   sendRequestNotif(userId: Float!): FriendRequestExtend!
@@ -384,7 +394,9 @@ type User {
   lastname: String
   password: String!
   photo: String
+  status: Boolean!
   updatedAt: DateTime!
+  videoCallId: Int
 }
 
 """user id in the group discuss"""
@@ -419,7 +431,9 @@ type UserDetails {
   notifications: [Notification!]!
   password: String!
   photo: String
+  status: Boolean!
   updatedAt: DateTime!
+  videoCallId: Int
 }
 
 type UserOnDiscussGroup {
@@ -427,21 +441,6 @@ type UserOnDiscussGroup {
   discussGroupId: Int!
   updatedAt: DateTime!
   userId: Int!
-}
-
-"""Return type of user for status online"""
-type UserWithStatus {
-  _count: UserCount
-  civilite: String
-  createdAt: DateTime!
-  email: String!
-  firstname: String
-  id: Int!
-  lastname: String
-  password: String!
-  photo: String
-  status: Boolean!
-  updatedAt: DateTime!
 }
 
 """User with token"""
@@ -455,6 +454,23 @@ type UserWithToken {
   lastname: String
   password: String!
   photo: String
+  status: Boolean!
   token: String!
+  updatedAt: DateTime!
+  videoCallId: Int
+}
+
+type VideoCallCount {
+  members: Int!
+}
+
+"""videoCall with members"""
+type VideoCallMembers {
+  _count: VideoCallCount
+  createdAt: DateTime!
+  discussionId: Int!
+  id: Int!
+  members: [User!]!
+  status: CallStatus!
   updatedAt: DateTime!
 }

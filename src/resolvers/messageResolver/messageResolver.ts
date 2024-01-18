@@ -16,16 +16,13 @@ import {
   FileExt,
   User,
   DiscussGroup,
-  UserOnDiscussGroup,
 } from "@generated/type-graphql/models";
 import { Context } from "../../context";
 import {
-  CallTypeObject,
   MessageInput,
   MessageResponse,
   MessageWithRecepter,
   MessageWrittingObject,
-  ResponseCallType,
 } from "./type";
 import { ApolloError } from "apollo-server-express";
 import { DiscussionExtend } from "../discussion/type";
@@ -57,46 +54,6 @@ export class MessageResolver {
     @Root("message") payload: DiscussionExtend,
     @Arg("userId") userId: number
   ): DiscussionExtend {
-    return payload;
-  }
-
-  @Subscription({
-    topics: "LISTEN_CALL",
-    filter: ({
-      args,
-      payload,
-    }: ResolverFilterData<
-      { userToCall: CallTypeObject },
-      { userId: number },
-      Context
-    >) => {
-      return payload.userToCall.receiverId === args.userId;
-    },
-  })
-  listenCall(
-    @Root("userToCall") payload: CallTypeObject,
-    @Arg("userId") userId: number
-  ): CallTypeObject {
-    return payload;
-  }
-
-  @Subscription({
-    topics: "HANDLE_CALL",
-    filter: ({
-      args,
-      payload,
-    }: ResolverFilterData<
-      { data: CallTypeObject },
-      { userId: number },
-      Context
-    >) => {
-      return payload.data.userId === args.userId;
-    },
-  })
-  handleCall(
-    @Root("data") payload: ResponseCallType,
-    @Arg("userId") userId: number
-  ): ResponseCallType {
     return payload;
   }
 
@@ -181,42 +138,6 @@ export class MessageResolver {
       return sortedMessages;
     } catch (error) {
       console.log(error);
-      return new ApolloError("une erreur s'est produite");
-    }
-  }
-
-  @Authorized()
-  @Mutation(() => String)
-  async callUser(
-    @Arg("userId") userId: number,
-    @Arg("receiverId") receiverId: number,
-    @Arg("signal") signal: string,
-    @PubSub() pubSub: PubSubEngine
-  ) {
-    try {
-      await pubSub.publish("LISTEN_CALL", {
-        userToCall: { userId, receiverId, signal },
-      });
-      return "call send success";
-    } catch (error) {
-      return new ApolloError("une erreur s'est produite");
-    }
-  }
-
-  @Authorized()
-  @Mutation(() => String)
-  async handleCallMutation(
-    @Arg("userId") userId: number,
-    @Arg("receiverId") receiverId: number,
-    @Arg("signal") signal: string,
-    @Arg("status") status: boolean,
-    @PubSub() pubsub: PubSubEngine
-  ) {
-    try {
-      await pubsub.publish("HANDLE_CALL", {
-        data: { userId, receiverId, signal, status },
-      });
-    } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }
   }
@@ -378,7 +299,11 @@ export class MessageResolver {
       });
       if (discussion) {
         await pubSub.publish("SEND_MESSAGE", {
-          message: discussion,
+          message: {
+            ...discussion,
+            User: discussion.User,
+            Receiver: discussion.Receiver ?? null,
+          },
         });
         return discussion;
       }
@@ -400,7 +325,7 @@ export class MessageResolver {
     try {
       const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
       const payload = {
-        user,
+        user: { ...user, status: true },
         discussionId,
         isWritting,
       };

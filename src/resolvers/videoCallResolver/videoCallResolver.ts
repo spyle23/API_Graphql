@@ -15,10 +15,11 @@ import { VideoCall, User } from "@generated/type-graphql/models";
 import { CallStatus } from "@generated/type-graphql/enums";
 import {
   CallTypeObject,
-  GetVideoCall,
   HandleCallType,
+  IDevice,
+  IDeviceWithVideoCall,
+  IJoin,
   ListenCallObject,
-  ResponseCallType,
   SendSignalType,
 } from "./type";
 import { Context } from "../../context";
@@ -27,6 +28,45 @@ import CryptoJS from "crypto-js";
 import { VideoCallMembers } from "../messageResolver/type";
 @Resolver(VideoCall)
 export class VideoCallResolver {
+  @Subscription({
+    topics: "JOIN_ROOM",
+    filter: ({
+      args,
+      payload,
+    }: ResolverFilterData<{ data: IJoin }, { userId: number }, Context>) => {
+      return payload.data.videoCall.members.find((a) => a.id === args.userId)
+        ? true
+        : false;
+    },
+  })
+  joinRoom(@Root("data") payload: IJoin, @Arg("userId") userId: number): User {
+    return payload.user;
+  }
+  @Subscription({
+    topics: "TOOGLE_DEVICES",
+    filter: ({
+      args,
+      payload,
+    }: ResolverFilterData<
+      { data: IDeviceWithVideoCall },
+      { userId: number },
+      Context
+    >) => {
+      return payload.data.videoCall.members.find((a) => a.id === args.userId)
+        ? true
+        : false;
+    },
+  })
+  listenToogleDevices(
+    @Root("data") payload: IDeviceWithVideoCall,
+    @Arg("userId") userId: number
+  ): IDevice {
+    return {
+      audio: payload.audio,
+      userId: payload.userId,
+      video: payload.video,
+    };
+  }
   @Subscription({
     topics: "LISTEN_CALL",
     filter: ({
@@ -113,7 +153,7 @@ export class VideoCallResolver {
       args,
       payload,
     }: ResolverFilterData<{ data: SendSignalType }, { userId: number }>) => {
-      return payload.data.userId === args.userId;
+      return payload.data.user.id === args.userId;
     },
   })
   lisenReturnSignal(
@@ -141,6 +181,7 @@ export class VideoCallResolver {
   async getVideoCall(
     @Arg("userId") userId: number,
     @Arg("token") token: string,
+    @PubSub() pubsub: PubSubEngine,
     @Ctx() ctx: Context
   ) {
     try {
@@ -170,10 +211,16 @@ export class VideoCallResolver {
           [discussion.User.id, discussion.Receiver?.id].includes(userId) ||
           discussion.DiscussGroup.members.find((a) => a.userId === userId)
         ) {
+          const user = await ctx.prisma.user.findUnique({
+            where: { id: userId },
+          });
           const videoCallUpdated = await ctx.prisma.videoCall.update({
             where: { id: value.videoCallId },
             data: { members: { connect: { id: userId } } },
             include: { members: { where: { id: { not: userId } } } },
+          });
+          await pubsub.publish("JOIN_ROOM", {
+            data: { user, videoCallUpdated },
           });
           return videoCallUpdated;
         }
@@ -254,11 +301,13 @@ export class VideoCallResolver {
     @Arg("userId") userId: number,
     @Arg("signal") signal: string,
     @Arg("receiverId") receiverId: number,
+    @Ctx() ctx: Context,
     @PubSub() pubsub: PubSubEngine
   ) {
     try {
+      const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
       await pubsub.publish("SEND_SIGNAL", {
-        data: { userId, signal, receiverId },
+        data: { user, signal, receiverId },
       });
       return "joined call";
     } catch (error) {
@@ -272,11 +321,13 @@ export class VideoCallResolver {
     @Arg("userId") userId: number,
     @Arg("signal") signal: string,
     @Arg("receiverId") receiverId: number,
+    @Ctx() ctx: Context,
     @PubSub() pubsub: PubSubEngine
   ) {
     try {
+      const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
       await pubsub.publish("RETURN_SIGNAL", {
-        data: { userId, signal, receiverId },
+        data: { user, signal, receiverId },
       });
       return "signal returned";
     } catch (error) {
@@ -305,9 +356,17 @@ export class VideoCallResolver {
         include: { members: true },
         data: { members: { disconnect: { id: userId } } },
       });
+      console.log(videoCall);
+      if (videoCall.members.length === 0) {
+        await ctx.prisma.discussion.update({
+          where: { id: value.discussionId },
+          data: { VideoCall: { delete: true } },
+        });
+      }
       await pubsub.publish("LEAVE_CALL", {
         data: { user, videoCall, signal: "" },
       });
+      return "Leave success";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }
@@ -330,10 +389,15 @@ export class VideoCallResolver {
       });
       const value = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
       if (status) {
-        await ctx.prisma.videoCall.update({
+        const user = await ctx.prisma.user.findUnique({
+          where: { id: userId },
+        });
+        const videoCall = await ctx.prisma.videoCall.update({
           where: { id: value.videoCallId },
           data: { members: { connect: { id: userId } } },
+          include: { members: { where: { id: { not: userId } } } },
         });
+        await pubsub.publish("JOIN_ROOM", { data: { user, videoCall } });
       } else {
         const discussion = await ctx.prisma.discussion.findUnique({
           where: { id: value.discussionId },
@@ -353,6 +417,36 @@ export class VideoCallResolver {
         }
       }
       return "handle success full";
+    } catch (error) {
+      return new ApolloError("une erreur s'est produite");
+    }
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async toogleDevices(
+    @Arg("userId") userId: number,
+    @Arg("token") token: string,
+    @Arg("audio") audio: boolean,
+    @Arg("video") video: boolean,
+    @Ctx() ctx: Context,
+    @PubSub() pubsub: PubSubEngine
+  ) {
+    try {
+      const key = process.env.VIDEO_SECRET || "";
+      const bytes = CryptoJS.AES.decrypt(token, key, {
+        mode: CryptoJS.mode.ECB,
+        padding: CryptoJS.pad.Pkcs7,
+      });
+      const value = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      const videoCall = await ctx.prisma.videoCall.findUnique({
+        where: { id: value.videoCallId },
+        include: { members: { where: { id: { not: userId } } } },
+      });
+      await pubsub.publish("TOOGLE_DEVICES", {
+        data: { userId, video, audio, videoCall },
+      });
+      return "success Toogle";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

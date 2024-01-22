@@ -1,5 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
-import { User, VideoCall } from "@generated/type-graphql/models";
+import { User } from "@generated/type-graphql/models";
 import { DiscussionExtend } from "../discussion/type";
 import { VideoCallMembers } from "../messageResolver/type";
 
@@ -31,8 +31,8 @@ export class ResponseCallType {
 export class SendSignalType {
   @Field()
   signal: string;
-  @Field()
-  userId: number;
+  @Field(() => User)
+  user: User;
   @Field()
   receiverId: number;
 }
@@ -49,4 +49,28 @@ export class GetVideoCall {
   videoCall: VideoCallMembers;
   @Field()
   signal: string;
+}
+
+@ObjectType({ description: "object return for toogle device" })
+export class IDevice {
+  @Field()
+  userId: number;
+  @Field()
+  audio: boolean;
+  @Field()
+  video: boolean;
+}
+
+@ObjectType({ description: "extend for toogle device" })
+export class IDeviceWithVideoCall extends IDevice {
+  @Field(() => VideoCallMembers)
+  videoCall: VideoCallMembers;
+}
+
+@ObjectType({ description: "for join room" })
+export class IJoin {
+  @Field(() => VideoCallMembers)
+  videoCall: VideoCallMembers;
+  @Field(() => User)
+  user: User;
 }

@@ -156,6 +156,13 @@ type GroupWithMembers {
   updatedAt: DateTime!
 }
 
+"""object return for toogle device"""
+type IDevice {
+  audio: Boolean!
+  userId: Float!
+  video: Boolean!
+}
+
 """return type for listen call"""
 type ListenCallObject {
   discussion: DiscussionExtend!
@@ -246,6 +253,7 @@ type Mutation {
   sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): DiscussionExtend!
   sendSignal(receiverId: Float!, signal: String!, userId: Float!): String!
   signup(userInput: SignupInput!): LoginResponseForm!
+  toogleDevices(audio: Boolean!, token: String!, userId: Float!, video: Boolean!): String!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
   upload(data: [Upload!]!): [FileExt!]!
   writtingCheck(discussionId: Float!, isWritting: Boolean!, userId: Float!): MessageResponse!
@@ -346,7 +354,7 @@ enum RequestStatus {
 type SendSignalType {
   receiverId: Float!
   signal: String!
-  userId: Float!
+  user: User!
 }
 
 """user inputs"""
@@ -362,11 +370,13 @@ type Subscription {
   commentPost(userId: Float!): Notification!
   deniedCall(userId: Float!): String!
   getStatusUser(userId: Float!): User!
+  joinRoom(userId: Float!): User!
   lisenLeaveCall(userId: Float!): User!
   lisenReturnSignal(userId: Float!): SendSignalType!
   lisenSendSignal(userId: Float!): SendSignalType!
   listenCall(userId: Float!): ListenCallObject!
   listenTheme(userId: Float!): DiscussionExtend!
+  listenToogleDevices(userId: Float!): IDevice!
   messageToUser(userId: Float!): DiscussionExtend!
   sendRequestNotif(userId: Float!): FriendRequestExtend!
   writeMessage(userId: Float!): MessageWrittingObject!

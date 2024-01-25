@@ -355,8 +355,7 @@ export class VideoCallResolver {
         where: { id: value.videoCallId },
         include: { members: true },
         data: { members: { disconnect: { id: userId } } },
-      });
-      console.log(videoCall);
+      }); 
       if (videoCall.members.length === 0) {
         await ctx.prisma.discussion.update({
           where: { id: value.discussionId },

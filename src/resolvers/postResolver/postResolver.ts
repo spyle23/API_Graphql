@@ -14,18 +14,41 @@ import { ApolloError } from "apollo-server-express";
 export class PostResolver {
   @Authorized()
   @Query(() => [PostDisplay])
-  async postByUser(@Arg("userId") userId: number, @Ctx() ctx: Context) {
+  async postByUser(
+    @Arg("userId") userId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Ctx() ctx: Context
+  ) {
     try {
-      const posts = await ctx.prisma.post.findMany({
+      const filters: any = {
         where: {
           userId: userId,
         },
         include: {
           files: true,
+          comments: true,
+          user: true,
           reactions: true,
         },
-      });
-      return posts;
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: limit,
+      };
+      const posts = (await ctx.prisma.post.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      )) as (Post & {
+        files: FileExt[];
+        comments: Comment[];
+        user: User;
+        reaction: Reaction[];
+      })[];
+      const modifiedPost = posts.map((i) => ({
+        ...i,
+        nbComments: i.comments.length,
+      }));
+      return modifiedPost;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

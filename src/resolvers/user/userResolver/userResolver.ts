@@ -67,19 +67,49 @@ export class UserResolver {
   }
 
   @Authorized()
-  @Query(() => UserDetails, { nullable: true })
-  async profile(@Arg("userId") userId: number, @Ctx() ctx: Context) {
+  @Query(() => UserDetails)
+  async profile(
+    @Arg("profilId") profilId: number,
+    @Arg("viewerId") viewerId: number,
+    @Ctx() ctx: Context
+  ) {
     try {
       const user = await ctx.prisma.user.findUnique({
         where: {
-          id: userId,
-        },
-        include: {
-          Post: true,
-          notifications: true,
+          id: profilId,
         },
       });
-      return user;
+      const request = await ctx.prisma.friendRequest.findMany({
+        where: {
+          OR: [{ userId: profilId }, { receiverId: profilId }],
+          status: RequestStatus.ACCEPTED,
+        },
+        include: {
+          User: true,
+          Receiver: true,
+        },
+        take: 10,
+        orderBy: { updatedAt: "desc" },
+      });
+      const friends = request.map<User>((val) =>
+        val.User.id !== profilId ? val.User : val.Receiver
+      );
+      const relation =
+        profilId !== viewerId
+          ? await ctx.prisma.friendRequest.findFirst({
+              where: {
+                OR: [
+                  { userId: profilId, receiverId: viewerId },
+                  { userId: viewerId, receiverId: profilId },
+                ],
+              },
+            })
+          : null;
+      return {
+        user,
+        friends,
+        relation,
+      };
     } catch (error) {
       return new ApolloError("Une erreur s'est produite");
     }

@@ -133,6 +133,15 @@ input FileInput {
   url: String!
 }
 
+type FriendRequest {
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int!
+  status: RequestStatus!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
 """friend request return type with sender"""
 type FriendRequestExtend {
   User: User!
@@ -317,8 +326,8 @@ type Query {
   getSuggestionOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
   getVideoCall(token: String!, userId: Float!): VideoCallMembers!
   messageTwoUser(cursor: Float, discussionId: Float!, limit: Float = 10): [MessageWithRecepter!]!
-  postByUser(userId: Float!): [PostDisplay!]!
-  profile(userId: Float!): UserDetails
+  postByUser(cursor: Float, limit: Float = 10, userId: Float!): [PostDisplay!]!
+  profile(profilId: Float!, viewerId: Float!): UserDetails!
 }
 
 type Reaction {
@@ -430,20 +439,9 @@ type UserCount {
 
 """details of user"""
 type UserDetails {
-  Post: [Post!]!
-  _count: UserCount
-  civilite: String
-  createdAt: DateTime!
-  email: String!
-  firstname: String
-  id: Int!
-  lastname: String
-  notifications: [Notification!]!
-  password: String!
-  photo: String
-  status: Boolean!
-  updatedAt: DateTime!
-  videoCallId: Int
+  friends: [User!]!
+  relation: FriendRequest
+  user: User!
 }
 
 type UserOnDiscussGroup {

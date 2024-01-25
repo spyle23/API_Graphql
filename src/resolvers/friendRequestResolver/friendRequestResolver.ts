@@ -244,7 +244,6 @@ export class FriendRequestResolver {
         },
       });
       if (status === RequestStatus.ACCEPTED) {
-        console.log("ato");
         const notification = await ctx.prisma.notification.create({
           data: {
             name: "invitation",

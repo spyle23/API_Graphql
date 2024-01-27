@@ -210,16 +210,32 @@ export class FriendRequestResolver {
     @Ctx() ctx: Context
   ) {
     try {
-      const request = await ctx.prisma.friendRequest.create({
-        data: {
-          User: { connect: { id: userId } },
-          Receiver: { connect: { id: receiverId } },
-          status: RequestStatus.PENDING,
-        },
-        include: {
-          User: true,
+      const existedRequest = await ctx.prisma.friendRequest.findFirst({
+        where: {
+          OR: [
+            { userId, receiverId },
+            { userId: receiverId, receiverId: userId },
+          ],
         },
       });
+      const request = existedRequest
+        ? await ctx.prisma.friendRequest.update({
+            where: { id: existedRequest.id },
+            data: { status: RequestStatus.PENDING },
+            include: {
+              User: true,
+            },
+          })
+        : await ctx.prisma.friendRequest.create({
+            data: {
+              User: { connect: { id: userId } },
+              Receiver: { connect: { id: receiverId } },
+              status: RequestStatus.PENDING,
+            },
+            include: {
+              User: true,
+            },
+          });
       pubSub.publish("SEND_REQUEST", { request });
       return "friend request send succesfull";
     } catch (error) {
@@ -241,6 +257,7 @@ export class FriendRequestResolver {
         data: { status },
         include: {
           Receiver: true,
+          User: true,
         },
       });
       if (status === RequestStatus.ACCEPTED) {
@@ -250,7 +267,7 @@ export class FriendRequestResolver {
             description: `${request.Receiver.firstname} ${request.Receiver.lastname} a confirmé votre invitation`,
             User: {
               connect: {
-                id: friendRequestId,
+                id: request.User.id,
               },
             },
           },

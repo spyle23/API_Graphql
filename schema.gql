@@ -373,7 +373,6 @@ type Subscription {
   commentPost(userId: Float!): Notification!
   deniedCall(userId: Float!): String!
   getStatusUser(userId: Float!): User!
-  joinRoom(userId: Float!): User!
   lisenLeaveCall(userId: Float!): User!
   lisenReturnSignal(userId: Float!): SendSignalType!
   lisenSendSignal(userId: Float!): SendSignalType!

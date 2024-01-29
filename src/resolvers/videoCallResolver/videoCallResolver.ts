@@ -16,7 +16,6 @@ import { CallStatus } from "@generated/type-graphql/enums";
 import {
   CallTypeObject,
   HandleCallType,
-  IJoin,
   ListenCallObject,
   SendSignalType,
 } from "./type";
@@ -26,21 +25,6 @@ import CryptoJS from "crypto-js";
 import { VideoCallMembers } from "../messageResolver/type";
 @Resolver(VideoCall)
 export class VideoCallResolver {
-  @Subscription({
-    topics: "JOIN_ROOM",
-    filter: ({
-      args,
-      payload,
-    }: ResolverFilterData<{ data: IJoin }, { userId: number }, Context>) => {
-      return payload.data.videoCall.members.find((a) => a.id === args.userId)
-        ? true
-        : false;
-    },
-  })
-  joinRoom(@Root("data") payload: IJoin, @Arg("userId") userId: number): User {
-    return payload.user;
-  }
-
   @Subscription({
     topics: "LISTEN_CALL",
     filter: ({
@@ -374,7 +358,6 @@ export class VideoCallResolver {
           data: { members: { connect: { id: userId } } },
           include: { members: { where: { id: { not: userId } } } },
         });
-        await pubsub.publish("JOIN_ROOM", { data: { user, videoCall } });
       } else {
         const discussion = await ctx.prisma.discussion.findUnique({
           where: { id: value.discussionId },

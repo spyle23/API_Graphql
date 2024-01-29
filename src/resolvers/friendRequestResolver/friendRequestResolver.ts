@@ -109,7 +109,7 @@ export class FriendRequestResolver {
       const friends = request.map<User>((val) =>
         val.User.id !== userId ? val.User : val.Receiver
       );
-      return status ? friends.filter((i) => i.status) : friends;
+      return friends;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

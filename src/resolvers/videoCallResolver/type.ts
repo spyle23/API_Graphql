@@ -54,11 +54,3 @@ export class GetVideoCall {
   @Field()
   signal: string;
 }
-
-@ObjectType({ description: "for join room" })
-export class IJoin {
-  @Field(() => VideoCallMembers)
-  videoCall: VideoCallMembers;
-  @Field(() => User)
-  user: User;
-}

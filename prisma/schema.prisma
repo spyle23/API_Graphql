@@ -61,9 +61,9 @@ model FriendRequest {
     id         Int           @id @default(autoincrement())
     status     RequestStatus
     Receiver   User          @relation(fields: [receiverId], references: [id], name: "request-received")
-    receiverId Int           @unique
+    receiverId Int           
     User       User          @relation(fields: [userId], references: [id], name: "request-send")
-    userId     Int           @unique
+    userId     Int           
     createdAt  DateTime      @default(now())
     updatedAt  DateTime      @updatedAt
 }

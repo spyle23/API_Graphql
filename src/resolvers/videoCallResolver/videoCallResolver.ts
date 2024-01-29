@@ -16,8 +16,6 @@ import { CallStatus } from "@generated/type-graphql/enums";
 import {
   CallTypeObject,
   HandleCallType,
-  IDevice,
-  IDeviceWithVideoCall,
   IJoin,
   ListenCallObject,
   SendSignalType,
@@ -42,31 +40,7 @@ export class VideoCallResolver {
   joinRoom(@Root("data") payload: IJoin, @Arg("userId") userId: number): User {
     return payload.user;
   }
-  @Subscription({
-    topics: "TOOGLE_DEVICES",
-    filter: ({
-      args,
-      payload,
-    }: ResolverFilterData<
-      { data: IDeviceWithVideoCall },
-      { userId: number },
-      Context
-    >) => {
-      return payload.data.videoCall.members.find((a) => a.id === args.userId)
-        ? true
-        : false;
-    },
-  })
-  listenToogleDevices(
-    @Root("data") payload: IDeviceWithVideoCall,
-    @Arg("userId") userId: number
-  ): IDevice {
-    return {
-      audio: payload.audio,
-      userId: payload.userId,
-      video: payload.video,
-    };
-  }
+
   @Subscription({
     topics: "LISTEN_CALL",
     filter: ({
@@ -301,13 +275,15 @@ export class VideoCallResolver {
     @Arg("userId") userId: number,
     @Arg("signal") signal: string,
     @Arg("receiverId") receiverId: number,
+    @Arg("audio") audio: boolean,
+    @Arg("video") video: boolean,
     @Ctx() ctx: Context,
     @PubSub() pubsub: PubSubEngine
   ) {
     try {
       const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
       await pubsub.publish("SEND_SIGNAL", {
-        data: { user, signal, receiverId },
+        data: { user, signal, receiverId, audio, video },
       });
       return "joined call";
     } catch (error) {
@@ -321,13 +297,15 @@ export class VideoCallResolver {
     @Arg("userId") userId: number,
     @Arg("signal") signal: string,
     @Arg("receiverId") receiverId: number,
+    @Arg("audio") audio: boolean,
+    @Arg("video") video: boolean,
     @Ctx() ctx: Context,
     @PubSub() pubsub: PubSubEngine
   ) {
     try {
       const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
       await pubsub.publish("RETURN_SIGNAL", {
-        data: { user, signal, receiverId },
+        data: { user, signal, receiverId, audio, video },
       });
       return "signal returned";
     } catch (error) {
@@ -355,7 +333,7 @@ export class VideoCallResolver {
         where: { id: value.videoCallId },
         include: { members: true },
         data: { members: { disconnect: { id: userId } } },
-      }); 
+      });
       if (videoCall.members.length === 0) {
         await ctx.prisma.discussion.update({
           where: { id: value.discussionId },
@@ -416,36 +394,6 @@ export class VideoCallResolver {
         }
       }
       return "handle success full";
-    } catch (error) {
-      return new ApolloError("une erreur s'est produite");
-    }
-  }
-
-  @Authorized()
-  @Mutation(() => String)
-  async toogleDevices(
-    @Arg("userId") userId: number,
-    @Arg("token") token: string,
-    @Arg("audio") audio: boolean,
-    @Arg("video") video: boolean,
-    @Ctx() ctx: Context,
-    @PubSub() pubsub: PubSubEngine
-  ) {
-    try {
-      const key = process.env.VIDEO_SECRET || "";
-      const bytes = CryptoJS.AES.decrypt(token, key, {
-        mode: CryptoJS.mode.ECB,
-        padding: CryptoJS.pad.Pkcs7,
-      });
-      const value = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      const videoCall = await ctx.prisma.videoCall.findUnique({
-        where: { id: value.videoCallId },
-        include: { members: { where: { id: { not: userId } } } },
-      });
-      await pubsub.publish("TOOGLE_DEVICES", {
-        data: { userId, video, audio, videoCall },
-      });
-      return "success Toogle";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

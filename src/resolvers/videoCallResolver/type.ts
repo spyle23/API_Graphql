@@ -34,6 +34,10 @@ export class SendSignalType {
   @Field(() => User)
   user: User;
   @Field()
+  audio: boolean;
+  @Field()
+  video: boolean;
+  @Field()
   receiverId: number;
 }
 
@@ -49,22 +53,6 @@ export class GetVideoCall {
   videoCall: VideoCallMembers;
   @Field()
   signal: string;
-}
-
-@ObjectType({ description: "object return for toogle device" })
-export class IDevice {
-  @Field()
-  userId: number;
-  @Field()
-  audio: boolean;
-  @Field()
-  video: boolean;
-}
-
-@ObjectType({ description: "extend for toogle device" })
-export class IDeviceWithVideoCall extends IDevice {
-  @Field(() => VideoCallMembers)
-  videoCall: VideoCallMembers;
 }
 
 @ObjectType({ description: "for join room" })

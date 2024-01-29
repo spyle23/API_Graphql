@@ -239,6 +239,7 @@ export class FriendRequestResolver {
       pubSub.publish("SEND_REQUEST", { request });
       return "friend request send succesfull";
     } catch (error) {
+      console.log(error);
       return new ApolloError("une erreur s'est produite");
     }
   }

@@ -1,12 +1,11 @@
+//@ts-nocheck
 import { Field, InputType, ObjectType } from "type-graphql";
 import { Message } from "@generated/type-graphql/models/Message";
 import { IsString } from "class-validator";
 import { ResponseForm } from "../../Types/ResponseForm";
-import {
-  DiscussGroup,
-  User,
-  UserOnDiscussGroup,
-} from "@generated/type-graphql/models";
+import { FileExt, User, VideoCall } from "@generated/type-graphql/models";
+import { FileInput } from "../postResolver/type";
+import { DiscussionExtend, GroupWithMembers } from "../discussion/type";
 
 @InputType({ description: "message inputs" })
 export class MessageInput implements Partial<Message> {
@@ -14,13 +13,8 @@ export class MessageInput implements Partial<Message> {
   @IsString()
   content: string;
 
-  @Field(() => String, { nullable: true })
-  image?: string;
-}
-@ObjectType({ description: "group with members" })
-export class GroupWithMembers extends DiscussGroup {
-  @Field(() => [UserOnDiscussGroup])
-  members?: UserOnDiscussGroup[];
+  @Field(() => [FileInput])
+  files?: FileInput[];
 }
 
 @ObjectType({ description: "message type with receiver and groupe" })
@@ -33,21 +27,18 @@ export class MessageWithRecepter extends Message {
 
   @Field(() => GroupWithMembers, { nullable: true })
   DiscussGroup?: GroupWithMembers;
+
+  @Field(() => [FileExt])
+  files?: FileExt[];
 }
 @ObjectType({ description: "return type of writting subcription" })
 export class MessageWrittingObject {
+  @Field(() => User)
+  user: User;
   @Field()
-  userId: number;
+  discussionId: number;
   @Field()
   isWritting: boolean;
-}
-
-@ObjectType({ description: "params for fitering the writting subscription" })
-export class MessageWritting extends MessageWrittingObject{
-  @Field(() => Number, { nullable: true })
-  receiverId?: number;
-  @Field(() => DiscussGroup, { nullable: true })
-  discussGroup?: DiscussGroup;
 }
 @ObjectType({ description: "message response type" })
 export class MessageResponse extends ResponseForm<Message[]> {
@@ -59,4 +50,10 @@ export class MessageResponse extends ResponseForm<Message[]> {
 
   @Field()
   success: boolean;
+}
+
+@ObjectType({ description: "videoCall with members" })
+export class VideoCallMembers extends VideoCall {
+  @Field(() => [User])
+  members?: User[];
 }

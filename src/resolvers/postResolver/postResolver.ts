@@ -1,5 +1,11 @@
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
-import { Post } from "@generated/type-graphql/models/Post";
+import {
+  Post,
+  FileExt,
+  Comment,
+  User,
+  Reaction,
+} from "@generated/type-graphql/models";
 import { Context } from "../../context";
 import { PostDisplay, PostInput } from "./type";
 import { ApolloError } from "apollo-server-express";
@@ -7,15 +13,42 @@ import { ApolloError } from "apollo-server-express";
 @Resolver(Post)
 export class PostResolver {
   @Authorized()
-  @Query(() => [Post])
-  async postByUser(@Arg("userId") userId: number, @Ctx() ctx: Context) {
+  @Query(() => [PostDisplay])
+  async postByUser(
+    @Arg("userId") userId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Ctx() ctx: Context
+  ) {
     try {
-      const posts = await ctx.prisma.post.findMany({
+      const filters: any = {
         where: {
           userId: userId,
         },
-      });
-      return posts;
+        include: {
+          files: true,
+          comments: true,
+          user: true,
+          reactions: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: limit,
+      };
+      const posts = (await ctx.prisma.post.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      )) as (Post & {
+        files: FileExt[];
+        comments: Comment[];
+        user: User;
+        reaction: Reaction[];
+      })[];
+      const modifiedPost = posts.map((i) => ({
+        ...i,
+        nbComments: i.comments.length,
+      }));
+      return modifiedPost;
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }
@@ -34,16 +67,26 @@ export class PostResolver {
       },
       take: limit,
       include: {
+        files: true,
         comments: true,
         user: true,
         reactions: true,
       },
     };
     try {
-      const post = await ctx.prisma.post.findMany(
+      const post = (await ctx.prisma.post.findMany(
         cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
-      );
-      return post;
+      )) as (Post & {
+        files: FileExt[];
+        comments: Comment[];
+        user: User;
+        reaction: Reaction[];
+      })[];
+      const modifiedPost = post.map((i) => ({
+        ...i,
+        nbComments: i.comments.length,
+      }));
+      return modifiedPost;
     } catch (error) {
       console.log("error", error);
       return new ApolloError("une erreur s'est produite");
@@ -58,9 +101,15 @@ export class PostResolver {
     @Ctx() ctx: Context
   ) {
     try {
-      await ctx.prisma.post.create({
+      const { files, description } = data;
+      const post = await ctx.prisma.post.create({
         data: {
-          ...data,
+          description,
+          files: {
+            createMany: {
+              data: files,
+            },
+          },
           user: {
             connect: {
               id: userId,
@@ -68,9 +117,10 @@ export class PostResolver {
           },
         },
       });
+
       return "post crée";
     } catch (error) {
-      return new ApolloError("post non");
+      return new ApolloError(error);
     }
   }
 }

@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import express from "express";
 import * as tq from "type-graphql";
-import resolvers from "./resolvers";
+import { resolvers } from "./resolvers";
 import { context } from "./context";
 import cors from "cors";
 import { createServer } from "http";
@@ -11,22 +11,33 @@ import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { customAuthChecker } from "./authChecker";
+import graphQLUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
+import { fileURLToPath } from "url";
+import path from "path";
+import dotenv from "dotenv";
 
-require("dotenv").config();
-
+dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 4000;
 (async () => {
   const app = express();
   app.use(cors());
-  app.use(express.json({ limit: "50mb" }));
-  app.use("/image", express.static(__dirname + "/uploads/image"));
-  app.use("/video", express.static(__dirname + "/uploads/video"));
-  app.use("/pdf", express.static(__dirname + "/uploads/application"))
+  app.use(graphQLUploadExpress());
+  app.use("/uploads/image", express.static(__dirname + "/uploads/image"));
+  app.use("/uploads/video", express.static(__dirname + "/uploads/video"));
+  app.use(
+    "/uploads/application",
+    express.static(__dirname + "/uploads/application")
+  );
 
   const httpServer = createServer(app);
   const schema = await tq.buildSchema({
     resolvers,
     authChecker: customAuthChecker,
+    validate: {
+      forbidUnknownValues: false,
+    },
     emitSchemaFile: true,
   });
   // create web socket server

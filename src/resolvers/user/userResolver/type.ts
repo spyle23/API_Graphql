@@ -1,5 +1,5 @@
-import { Notification, Post } from "@generated/type-graphql/models";
-import { User } from "@generated/type-graphql/models/User";
+//@ts-nocheck
+import { User, FriendRequest } from "@generated/type-graphql/models";
 import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { ResponseForm } from "../../../Types/ResponseForm";
@@ -40,12 +40,15 @@ export class LoginResponseForm extends ResponseForm<UserWithToken> {
 }
 
 @ObjectType({ description: "details of user" })
-export class UserDetails extends User {
-  @Field(() => [Post])
-  Post?: Post[];
+export class UserDetails {
+  @Field(() => User)
+  user: User;
 
-  @Field(() => [Notification])
-  notifications?: Notification[];
+  @Field(() => [User])
+  friends: User[];
+
+  @Field(() => FriendRequest, { nullable: true })
+  relation: FriendRequest;
 }
 
 @InputType({ description: "input for update user" })

@@ -40,10 +40,11 @@ export class CommentResolver {
         include: {
           User: true,
           Post: true,
+          files: true,
         },
       };
       const comments = await ctx.prisma.comment.findMany(
-        cursor ? { ...filters, cursor: { id: cursor } } : filters
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
       );
       const response: CommentResponse = {
         message: "Liste des commentaires pour le post",
@@ -72,7 +73,10 @@ export class CommentResolver {
       const response: CommentResponse = {
         message: "liste des commentaires par l'utilisateur",
         success: true,
-        data: comments,
+        data: comments.map((i) => ({
+          ...i,
+          User: { ...i.User, status: false },
+        })),
       };
       return response;
     } catch (error) {
@@ -93,6 +97,11 @@ export class CommentResolver {
       const newComment = await ctx.prisma.comment.create({
         data: {
           ...commentInput,
+          files: {
+            createMany: {
+              data: commentInput.files,
+            },
+          },
           User: {
             connect: {
               id: userId,
@@ -156,6 +165,11 @@ export class CommentResolver {
           },
           data: {
             ...commentInput,
+            files: {
+              createMany: {
+                data: commentInput.files,
+              },
+            },
             updatedAt: new Date(),
           },
         });

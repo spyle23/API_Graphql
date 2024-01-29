@@ -6,14 +6,22 @@ import { MessageResolver } from "./messageResolver";
 import { PostResolver } from "./postResolver";
 import { ReactionResolver } from "./ReactionResolver";
 import { UserResolver } from "./user/userResolver/userResolver";
+import { DiscussionResolver } from "./discussion";
+import { FriendRequestResolver } from "./friendRequestResolver";
+import { NotificationResolver } from "./notificationResolver";
+import { VideoCallResolver } from "./videoCallResolver";
 
-//test
-export default [
+export const resolvers = [
   UserResolver,
   PostResolver,
   MessageResolver,
   DiscussGroupResolver,
+  DiscussionResolver,
+  FriendRequestResolver,
+  NotificationResolver,
   CommentResolver,
   FileResolver,
+  DiscussGroupResolver,
   ReactionResolver,
+  VideoCallResolver,
 ] as NonEmptyArray<Function> | NonEmptyArray<string>;

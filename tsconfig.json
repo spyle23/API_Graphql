@@ -1,13 +1,20 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "commonjs",
+    "target": "ESNext",
+    "module": "ESNext",
     "outDir": "./build",
     "rootDir": ".",
     "lib": ["es2018", "dom", "esnext.asynciterable"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "moduleResolution": "Node",
     "esModuleInterop": true
+  },
+  "ts-node": {
+    "esm": true,
+    "compilerOptions": {
+      "module": "ESNext"
+    }
   },
   "exclude": ["/node_modules", "/build"]
 }

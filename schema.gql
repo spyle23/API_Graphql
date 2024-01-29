@@ -3,20 +3,19 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
-type Comment {
-  content: String!
-  createdAt: DateTime!
-  id: Int!
-  image: String
-  postId: Int!
-  updatedAt: DateTime!
-  userId: Int!
+enum CallStatus {
+  ENDED
+  PENDING
+}
+
+type CommentCount {
+  files: Int!
 }
 
 """input for the comment"""
 input CommentInput {
   content: String!
-  image: String
+  files: [FileInput!]!
 }
 
 """response type for comment"""
@@ -30,10 +29,11 @@ type CommentResponse {
 type CommentWithUser {
   Post: Post!
   User: User!
+  _count: CommentCount
   content: String!
   createdAt: DateTime!
+  files: [FileExt!]!
   id: Int!
-  image: String
   postId: Int!
   updatedAt: DateTime!
   userId: Int!
@@ -48,6 +48,7 @@ type DiscussGroup {
   _count: DiscussGroupCount
   coverPhoto: String
   createdAt: DateTime!
+  discussionId: Int!
   groupName: String!
   id: Int!
   updatedAt: DateTime!
@@ -58,10 +59,98 @@ type DiscussGroupCount {
   members: Int!
 }
 
+"""discuss group with discussion"""
+type DiscussGroupDiscussion {
+  Discussion: Discussion!
+  _count: DiscussGroupCount
+  coverPhoto: String
+  createdAt: DateTime!
+  discussionId: Int!
+  groupName: String!
+  id: Int!
+  updatedAt: DateTime!
+}
+
 """user choose"""
 input DiscussGroupInput {
   coverPhoto: String
   groupName: String!
+}
+
+type Discussion {
+  _count: DiscussionCount
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int
+  theme: String!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+type DiscussionCount {
+  messages: Int!
+}
+
+"""Object that extends the discussion base models"""
+type DiscussionExtend {
+  DiscussGroup: GroupWithMembers
+  Receiver: User
+  User: User!
+  _count: DiscussionCount
+  createdAt: DateTime!
+  id: Int!
+  messages: [MessageWithRecepter!]!
+  receiverId: Int
+  theme: String!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+"""input for changing theme discussion"""
+input DiscussionInput {
+  id: Float!
+  receiverId: Float
+  theme: String!
+  userId: Float!
+}
+
+type FileExt {
+  commentId: Int
+  createdAt: DateTime!
+  extension: String!
+  id: Int!
+  messageId: Int
+  name: String!
+  postId: Int
+  updatedAt: DateTime!
+  url: String!
+}
+
+"""input for file"""
+input FileInput {
+  extension: String!
+  name: String!
+  url: String!
+}
+
+type FriendRequest {
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int!
+  status: RequestStatus!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+"""friend request return type with sender"""
+type FriendRequestExtend {
+  User: User!
+  createdAt: DateTime!
+  id: Int!
+  receiverId: Int!
+  status: RequestStatus!
+  updatedAt: DateTime!
+  userId: Int!
 }
 
 """group with members"""
@@ -69,10 +158,17 @@ type GroupWithMembers {
   _count: DiscussGroupCount
   coverPhoto: String
   createdAt: DateTime!
+  discussionId: Int!
   groupName: String!
   id: Int!
   members: [UserOnDiscussGroup!]!
   updatedAt: DateTime!
+}
+
+"""return type for listen call"""
+type ListenCallObject {
+  discussion: DiscussionExtend!
+  token: String!
 }
 
 """Login response with token"""
@@ -83,20 +179,25 @@ type LoginResponseForm {
 }
 
 type Message {
+  _count: MessageCount
   content: String!
   createdAt: DateTime!
   discussGroupId: Int
+  discussionId: Int!
   id: Int!
-  image: String
   receiverId: Int
   updatedAt: DateTime!
   userId: Int!
 }
 
+type MessageCount {
+  files: Int!
+}
+
 """message inputs"""
 input MessageInput {
   content: String!
-  image: String
+  files: [FileInput!]!
 }
 
 """message response type"""
@@ -111,11 +212,13 @@ type MessageWithRecepter {
   DiscussGroup: GroupWithMembers
   Receiver: User
   User: User!
+  _count: MessageCount
   content: String!
   createdAt: DateTime!
   discussGroupId: Int
+  discussionId: Int!
+  files: [FileExt!]!
   id: Int!
-  image: String
   receiverId: Int
   updatedAt: DateTime!
   userId: Int!
@@ -123,26 +226,38 @@ type MessageWithRecepter {
 
 """return type of writting subcription"""
 type MessageWrittingObject {
+  discussionId: Float!
   isWritting: Boolean!
-  userId: Float!
+  user: User!
 }
 
 type Mutation {
   addReaction(postId: Float!, reactionType: ReactionInput!, userId: Float!): String!
+  callUser(discussionId: Float!, userId: Float!): String!
+  changeStatus(status: Boolean!, userId: Float!): String!
+  changeTheme(data: DiscussionInput!): Discussion!
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
-  createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!): DiscussGroup!
+  createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!, userId: Float!): DiscussGroupDiscussion!
+  createDiscussion(receiverId: Float!, userId: Float!): DiscussionExtend!
   createPost(data: PostInput!, userId: Float!): String!
   deleteComment(commentId: Float!, userId: Float!): String!
   deleteFile(url: String!): String!
+  deleteFriend(receiverId: Float!, userId: Float!): String!
   deleteMessageById(messageId: Float!, userId: Float!): String!
+  handleCallMutation(status: Boolean!, token: String!, userId: Float!): String!
+  handleFriendRequest(friendRequestId: Float!, status: String!): String!
+  leaveCall(token: String!, userId: Float!): String!
   login(email: String!, password: String!): LoginResponseForm!
   modifyComment(commendId: Float!, commentInput: CommentInput!, userId: Float!): String!
   modifyMessage(messageId: Float!, newMessage: String!, userId: Float!): String!
-  sendMessageDiscoussGroup(discussGroupId: Float, messageInput: MessageInput!, receiverId: Float, userId: Float!): MessageResponse!
+  returnSignal(audio: Boolean!, receiverId: Float!, signal: String!, userId: Float!, video: Boolean!): String!
+  sendFriendRequest(receiverId: Float!, userId: Float!): String!
+  sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): DiscussionExtend!
+  sendSignal(audio: Boolean!, receiverId: Float!, signal: String!, userId: Float!, video: Boolean!): String!
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
-  upload(data: UploadInput!): String!
-  writtingCheck(discussGroupId: Float, isWritting: Boolean!, receiverId: Float, userId: Float!): MessageResponse!
+  upload(data: [Upload!]!): [FileExt!]!
+  writtingCheck(discussionId: Float!, isWritting: Boolean!, userId: Float!): MessageResponse!
 }
 
 type Notification {
@@ -159,24 +274,24 @@ type Post {
   createdAt: DateTime!
   description: String!
   id: Int!
-  image: String
   updatedAt: DateTime!
   userId: Int!
 }
 
 type PostCount {
   comments: Int!
+  files: Int!
   reactions: Int!
 }
 
 """Form of post to display"""
 type PostDisplay {
   _count: PostCount
-  comments: [Comment!]
   createdAt: DateTime!
   description: String!
+  files: [FileExt!]!
   id: Int!
-  image: String
+  nbComments: Float!
   reactions: [Reaction!]
   updatedAt: DateTime!
   user: User!
@@ -186,7 +301,7 @@ type PostDisplay {
 """inputs for post"""
 input PostInput {
   description: String!
-  image: String
+  files: [FileInput!]!
 }
 
 type Query {
@@ -194,11 +309,17 @@ type Query {
   getAllGroupUser(userId: Float!): [DiscussGroup!]!
   getCommentByPost(cursor: Float, limit: Float = 10, postId: Float!): CommentResponse!
   getCommentByUser(userId: Float!): CommentResponse!
+  getCommonFriends(cursor: Float, limit: Float = 10, receiverId: Float!, userId: Float!): [User!]!
+  getDiscussionCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [DiscussionExtend!]!
+  getFriendOfCurrentUser(cursor: Float, limit: Float = 10, status: Boolean, userId: Float!): [User!]!
+  getNotifications(cursor: Float, limit: Float = 10, userId: Float!): [Notification!]!
   getOrderPost(cursor: Float, limit: Float = 10): [PostDisplay!]!
-  messageTwoUser(discussGroupId: Float, receiverId: Float, userId: Float!): [MessageWithRecepter!]!
-  messagesOfCurrentUser(userId: Float!): [MessageWithRecepter!]!
-  postByUser(userId: Float!): [Post!]!
-  profile(userId: Float!): UserDetails
+  getRequest(cursor: Float, limit: Float = 10, userId: Float!): [FriendRequestExtend!]!
+  getSuggestionOfCurrentUser(cursor: Float, limit: Float = 10, userId: Float!): [User!]!
+  getVideoCall(token: String!, userId: Float!): VideoCallMembers!
+  messageTwoUser(cursor: Float, discussionId: Float!, limit: Float = 10): [MessageWithRecepter!]!
+  postByUser(cursor: Float, limit: Float = 10, userId: Float!): [PostDisplay!]!
+  profile(profilId: Float!, viewerId: Float!): UserDetails!
 }
 
 type Reaction {
@@ -224,6 +345,21 @@ enum ReactionType {
   WOAHOU
 }
 
+enum RequestStatus {
+  ACCEPTED
+  DENIED
+  PENDING
+}
+
+"""send signal type"""
+type SendSignalType {
+  audio: Boolean!
+  receiverId: Float!
+  signal: String!
+  user: User!
+  video: Boolean!
+}
+
 """user inputs"""
 input SignupInput {
   civilite: String
@@ -235,7 +371,15 @@ input SignupInput {
 
 type Subscription {
   commentPost(userId: Float!): Notification!
-  messageToUser(userId: Float!): MessageWithRecepter!
+  deniedCall(userId: Float!): String!
+  getStatusUser(userId: Float!): User!
+  lisenLeaveCall(userId: Float!): User!
+  lisenReturnSignal(userId: Float!): SendSignalType!
+  lisenSendSignal(userId: Float!): SendSignalType!
+  listenCall(userId: Float!): ListenCallObject!
+  listenTheme(userId: Float!): DiscussionExtend!
+  messageToUser(userId: Float!): DiscussionExtend!
+  sendRequestNotif(userId: Float!): FriendRequestExtend!
   writeMessage(userId: Float!): MessageWrittingObject!
 }
 
@@ -248,12 +392,8 @@ input UpdateUserInput {
   photo: String
 }
 
-"""input for the file"""
-input UploadInput {
-  data: String!
-  name: String!
-  type: String!
-}
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
 
 type User {
   _count: UserCount
@@ -265,7 +405,9 @@ type User {
   lastname: String
   password: String!
   photo: String
+  status: Boolean!
   updatedAt: DateTime!
+  videoCallId: Int
 }
 
 """user id in the group discuss"""
@@ -276,27 +418,22 @@ input UserChoose {
 type UserCount {
   Post: Int!
   comments: Int!
+  discussions: Int!
+  friendRequest: Int!
   groupes: Int!
   messages: Int!
   notifications: Int!
   reactions: Int!
+  receiverDiscussions: Int!
   receiverMessage: Int!
+  request: Int!
 }
 
 """details of user"""
 type UserDetails {
-  Post: [Post!]!
-  _count: UserCount
-  civilite: String
-  createdAt: DateTime!
-  email: String!
-  firstname: String
-  id: Int!
-  lastname: String
-  notifications: [Notification!]!
-  password: String!
-  photo: String
-  updatedAt: DateTime!
+  friends: [User!]!
+  relation: FriendRequest
+  user: User!
 }
 
 type UserOnDiscussGroup {
@@ -317,6 +454,23 @@ type UserWithToken {
   lastname: String
   password: String!
   photo: String
+  status: Boolean!
   token: String!
+  updatedAt: DateTime!
+  videoCallId: Int
+}
+
+type VideoCallCount {
+  members: Int!
+}
+
+"""videoCall with members"""
+type VideoCallMembers {
+  _count: VideoCallCount
+  createdAt: DateTime!
+  discussionId: Int!
+  id: Int!
+  members: [User!]!
+  status: CallStatus!
   updatedAt: DateTime!
 }

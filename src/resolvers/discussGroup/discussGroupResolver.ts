@@ -3,25 +3,43 @@ import { DiscussGroup } from "@generated/type-graphql/models/DiscussGroup";
 import { User } from "@generated/type-graphql/models/User";
 import { Context } from "../../context";
 import { ApolloError } from "apollo-server-express";
-import { DiscussGroupInput, UserChoose, UserWithGroup } from "./type";
+import {
+  DiscussGroupDiscussion,
+  DiscussGroupInput,
+  UserChoose,
+  UserWithGroup,
+} from "./type";
 
 @Resolver(DiscussGroup)
 export class DiscussGroupResolver {
-  @Mutation(() => DiscussGroup)
+  @Mutation(() => DiscussGroupDiscussion)
   async createDiscussGroup(
     @Arg("data") data: DiscussGroupInput,
     @Arg("userChoose") userChoose: UserChoose,
+    @Arg("userId") userId: number,
     @Ctx() ctx: Context
   ) {
     try {
+      const discussion = await ctx.prisma.discussion.create({
+        data: { User: { connect: { id: userId } } },
+      });
+      const membresId = [...userChoose.membresId, userId];
       const group = await ctx.prisma.discussGroup.create({
         data: {
           ...data,
+          Discussion: {
+            connect: {
+              id: discussion.id,
+            },
+          },
           members: {
-            create: userChoose.membresId.map((value) => ({
+            create: membresId.map((value) => ({
               User: { connect: { id: value } },
             })),
           },
+        },
+        include: {
+          Discussion: true,
         },
       });
       return group;

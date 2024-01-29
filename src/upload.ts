@@ -1,5 +1,9 @@
 import { v4 as uuid } from "uuid";
 import fs from "fs";
+import { FileUpload } from "./Types/FileUpload";
+import path from "path";
+import { fileURLToPath } from "url";
+import { FileExt } from "@generated/type-graphql/models";
 
 enum TypeFile {
   IMAGE = "image",
@@ -13,37 +17,43 @@ type FileType = {
   type: string;
 };
 
-export const uploadFile = ({ key, body, type }: FileType): Promise<string> => {
-  const uniqueKey = uuid();
-  let basePathUpload = "";
-  const fileType = body.split("/")[0].split(":")[1];
-  if (fileType === TypeFile.IMAGE) {
-    basePathUpload = `/image`;
-  } else if (fileType === TypeFile.APPLICATION) {
-    basePathUpload = `/pdf`;
-  } else {
-    basePathUpload = `/video`;
-  }
-  const buffer = Buffer.from(
-    body
-      .replace(/^data:image\/\w+;base64,/, "")
-      .replace(/^data:application\/\w+;base64,/, "")
-      .replace(/^data:video\/\w+;base64,/, ""),
-    "base64"
-  );
-  const filePath = `./src/uploads/${fileType}/${uniqueKey}.${type}`;
-  return new Promise<string>((resolve, reject) => {
-    
-    fs.writeFile(filePath, buffer, "base64", (err) => {
-      if (err) {
-        console.log("err: ", err);
-        reject(err);
-      } else {
-        console.log(`${basePathUpload}/${uniqueKey}.${type}`)
-        resolve(`${basePathUpload}/${uniqueKey}.${type}`);
-      }
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+export const uploadFile = async (data: FileUpload[]): Promise<Partial<FileExt>[]> => {
+  const fileExt: Partial<FileExt>[] = [];
+
+  for (const file of data) {
+    const uniqueKey = uuid();
+    const { filename, mimetype, createReadStream } = await file;
+    const type = mimetype.split("/")[0];
+    const uploadDir = `/uploads/${type}`;
+    const fullUploadDir = path.join(__dirname, uploadDir);
+    if (!fs.existsSync(fullUploadDir)) {
+      fs.mkdirSync(fullUploadDir);
+    }
+    const newFileName = `${filename.split(".")[0]}_${uniqueKey}.${
+      filename.split(".")[1]
+    }`;
+    const filePath = path.join(fullUploadDir, newFileName);
+    const fileStream = createReadStream();
+    const writeStream = fs.createWriteStream(filePath);
+    const promise = new Promise<string>((res, rej) => {
+      fileStream
+        .pipe(writeStream)
+        .on("finish", () => res(uploadDir))
+        .on("error", rej);
     });
-  });
+
+    const fileToSave: Partial<FileExt> = {
+      name: filename,
+      url: await promise + `/${newFileName}`,
+      extension: mimetype
+    }
+
+    fileExt.push(fileToSave);
+  }
+
+  return fileExt;
 };
 
 export const deleteFile = (url: string): Promise<boolean> => {

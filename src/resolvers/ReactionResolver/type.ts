@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Reaction } from "@generated/type-graphql/models/Reaction";
 import { ReactionType } from "@generated/type-graphql/enums/ReactionType";
 import { Field, InputType } from "type-graphql";

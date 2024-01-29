@@ -11,17 +11,21 @@ import {
   Root,
   Subscription,
 } from "type-graphql";
-import { User, DiscussGroup } from "@generated/type-graphql/models";
-import { Message } from "@generated/type-graphql/models/Message";
+import {
+  Message,
+  FileExt,
+  User,
+  DiscussGroup,
+} from "@generated/type-graphql/models";
 import { Context } from "../../context";
 import {
   MessageInput,
   MessageResponse,
   MessageWithRecepter,
-  MessageWritting,
   MessageWrittingObject,
 } from "./type";
 import { ApolloError } from "apollo-server-express";
+import { DiscussionExtend } from "../discussion/type";
 
 @Resolver(Message)
 export class MessageResolver {
@@ -31,136 +35,190 @@ export class MessageResolver {
       payload,
       args,
       context,
-    }: ResolverFilterData<any, any, Context>) => {
-      const currentUser = await context.prisma.user.findUnique({
-        where: { id: args.userId },
-        include: { groupes: true },
-      });
-      if (payload.message.discussGroupId) {
-        return currentUser.groupes.find(
-          ({ discussGroupId }) =>
-            discussGroupId === payload.message.discussGroupId &&
-            payload.message.userId !== args.userId
-        )
-          ? true
-          : false;
-      }
-      return payload.message.receiverId === args.userId;
-    },
-  })
-  messageToUser(
-    @Root("message") payload: MessageWithRecepter,
-    @Arg("userId") userId: number
-  ): MessageWithRecepter {
-    return payload;
-  }
-
-  @Subscription({
-    topics: "WRITE_MESSAGE",
-    filter: ({
-      payload,
-      args,
     }: ResolverFilterData<
-      { write: MessageWritting },
+      { message: DiscussionExtend },
       { userId: number },
       Context
     >) => {
-      if (payload.write.discussGroup) {
-        return payload.write.discussGroup.members.find(
+      if (payload.message.DiscussGroup) {
+        return payload.message.DiscussGroup.members.find(
           (i) => i.userId === args.userId
         )
           ? true
           : false;
       }
-      return payload.write.receiverId === args.userId;
+      return payload.message.messages[0].receiverId === args.userId;
     },
   })
-  writeMessage(
-    @Root("write") payload: MessageWritting,
+  messageToUser(
+    @Root("message") payload: DiscussionExtend,
     @Arg("userId") userId: number
-  ): MessageWrittingObject {
-    return {
-      userId: payload.userId,
-      isWritting: payload.isWritting,
-    };
+  ): DiscussionExtend {
+    return payload;
   }
 
-  @Authorized()
-  @Query(() => [MessageWithRecepter])
-  async messagesOfCurrentUser(
-    @Arg("userId") userId: number,
-    @Ctx() ctx: Context
-  ) {
-    try {
-      const messages = await ctx.prisma.message.findMany({
+  @Subscription({
+    topics: "WRITE_MESSAGE",
+    filter: async ({
+      payload,
+      args,
+      context,
+    }: ResolverFilterData<
+      { write: MessageWrittingObject },
+      { userId: number },
+      Context
+    >) => {
+      const discussion = await context.prisma.discussion.findFirst({
+        where: { id: payload.write.discussionId },
         include: {
-          User: true,
-          Receiver: true,
           DiscussGroup: {
             include: {
               members: true,
             },
           },
-        },
-        orderBy: {
-          createdAt: "desc",
+          User: true,
+          Receiver: true,
         },
       });
-      const filteredMessages = messages.filter(
-        (message) =>
-          (message.userId === userId && message.receiverId !== userId) ||
-          (message.receiverId === userId && message.userId !== userId) ||
-          (message.DiscussGroup?.members.find(
-            (value) => value.userId === userId
-          )
-            ? true
-            : false)
-      );
+      if (args.userId === payload.write.user.id) return false;
+      if (discussion.DiscussGroup) {
+        return discussion.DiscussGroup.members.find(
+          (i) => i.userId === args.userId
+        )
+          ? true
+          : false;
+      }
+      return [discussion.userId, discussion.receiverId as number].includes(
+        args.userId
+      )
+        ? true
+        : false;
+    },
+  })
+  writeMessage(
+    @Root("write") payload: MessageWrittingObject,
+    @Arg("userId") userId: number
+  ): MessageWrittingObject {
+    return {
+      user: payload.user,
+      isWritting: payload.isWritting,
+      discussionId: payload.discussionId,
+    };
+  }
 
-      // console.log("filteredMessages", filteredMessages);
-
-      const uniqueMessages: (Message & {
+  @Authorized()
+  @Query(() => [MessageWithRecepter])
+  async messageTwoUser(
+    @Arg("discussionId") discussionId: number,
+    @Arg("cursor", { nullable: true }) cursor: number,
+    @Arg("limit", { defaultValue: 10 }) limit: number,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const filters: any = {
+        where: { discussionId },
+        include: {
+          User: true,
+          Receiver: true,
+          files: true,
+          DiscussGroup: true,
+        },
+        orderBy: { id: "desc" },
+        take: limit,
+      };
+      const messages = (await ctx.prisma.message.findMany(
+        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+      )) as (Message & {
         User: User;
-        Receiver: User;
+        Receiver?: User;
+        files: FileExt[];
         DiscussGroup: DiscussGroup;
-      })[] = [];
-
-      const uniqueCombinaison: { [key: string]: boolean } = {};
-
-      filteredMessages.forEach((message) => {
-        const shortedKey = message.receiverId
-          ? [message.userId, message.receiverId].sort((a, b) => a - b)
-          : [message.discussGroupId];
-        const key =
-          shortedKey.length > 1
-            ? `${shortedKey[0]}-${shortedKey[1]}`
-            : `${shortedKey[0]}`;
-
-        if (!uniqueCombinaison[key]) {
-          uniqueCombinaison[key] = true;
-          uniqueMessages.push(message);
-        }
-        // const existingMessage = uniqueMessages.some(
-        //   (m) =>
-        //     (m.userId === message.userId &&
-        //       m.receiverId === message.receiverId) ||
-        //     (m.userId === message.receiverId &&
-        //       m.receiverId === message.userId) ||
-        //     m.discussGroupId === message.discussGroupId
-        // );
-      });
-
-      return uniqueMessages;
+      })[];
+      const sortedMessages = messages.sort((a, b) => a.id - b.id);
+      return sortedMessages;
     } catch (error) {
+      console.log(error);
       return new ApolloError("une erreur s'est produite");
     }
   }
 
+  // @Authorized()
+  // @Query(() => [MessageWithRecepter])
+  // async messagesOfCurrentUser(
+  //   @Arg("userId") userId: number,
+  //   @Ctx() ctx: Context
+  // ) {
+  //   try {
+  //     const messages = await ctx.prisma.message.findMany({
+  //       include: {
+  //         User: true,
+  //         Receiver: true,
+  //         DiscussGroup: {
+  //           include: {
+  //             members: true,
+  //           },
+  //         },
+  //       },
+  //       orderBy: {
+  //         createdAt: "desc",
+  //       },
+  //     });
+  //     const filteredMessages = messages.filter(
+  //       (message) =>
+  //         (message.userId === userId && message.receiverId !== userId) ||
+  //         (message.receiverId === userId && message.userId !== userId) ||
+  //         (message.DiscussGroup?.members.find(
+  //           (value) => value.userId === userId
+  //         )
+  //           ? true
+  //           : false)
+  //     );
+
+  //     // console.log("filteredMessages", filteredMessages);
+
+  //     const uniqueMessages: (Message & {
+  //       User: User;
+  //       Receiver: User;
+  //       DiscussGroup: DiscussGroup;
+  //     })[] = [];
+
+  //     const uniqueCombinaison: { [key: string]: boolean } = {};
+
+  //     filteredMessages.forEach((message) => {
+  //       const shortedKey = message.receiverId
+  //         ? [message.userId, message.receiverId].sort((a, b) => a - b)
+  //         : [message.discussGroupId];
+  //       const key =
+  //         shortedKey.length > 1
+  //           ? `${shortedKey[0]}-${shortedKey[1]}`
+  //           : `${shortedKey[0]}`;
+
+  //       if (!uniqueCombinaison[key]) {
+  //         uniqueCombinaison[key] = true;
+  //         uniqueMessages.push(message);
+  //       }
+  //       // const existingMessage = uniqueMessages.some(
+  //       //   (m) =>
+  //       //     (m.userId === message.userId &&
+  //       //       m.receiverId === message.receiverId) ||
+  //       //     (m.userId === message.receiverId &&
+  //       //       m.receiverId === message.userId) ||
+  //       //     m.discussGroupId === message.discussGroupId
+  //       // );
+  //     });
+
+  //     return uniqueMessages;
+  //   } catch (error) {
+  //     return new ApolloError("une erreur s'est produite");
+  //   }
+  // }
+
   @Authorized()
-  @Mutation(() => MessageResponse)
+  @Mutation(() => DiscussionExtend)
   async sendMessageDiscoussGroup(
     @Arg("messageInput") messageInput: MessageInput,
     @Arg("userId") userId: number,
+    @Arg("discussionId") discussionId: number,
     @Arg("receiverId", { nullable: true }) receiverId: number,
     @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
     @PubSub() pubSub: PubSubEngine,
@@ -170,6 +228,16 @@ export class MessageResolver {
       const dataMessage = receiverId
         ? {
             ...messageInput,
+            files: {
+              createMany: {
+                data: messageInput.files,
+              },
+            },
+            Discussion: {
+              connect: {
+                id: discussionId,
+              },
+            },
             Receiver: {
               connect: {
                 id: receiverId,
@@ -183,6 +251,16 @@ export class MessageResolver {
           }
         : {
             ...messageInput,
+            files: {
+              createMany: {
+                data: messageInput.files,
+              },
+            },
+            Discussion: {
+              connect: {
+                id: discussionId,
+              },
+            },
             User: {
               connect: {
                 id: userId,
@@ -194,22 +272,40 @@ export class MessageResolver {
               },
             },
           };
-      const message = await ctx.prisma.message.create({
+      await ctx.prisma.message.create({
         data: dataMessage,
+      });
+      const discussion = await ctx.prisma.discussion.findUnique({
+        where: { id: discussionId },
         include: {
           User: true,
           Receiver: true,
-          DiscussGroup: true,
+          DiscussGroup: {
+            include: {
+              members: true,
+            },
+          },
+          messages: {
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+            include: {
+              files: true,
+              User: true,
+              DiscussGroup: true,
+              Receiver: true,
+            },
+          },
         },
       });
-      if (message) {
+      if (discussion) {
         await pubSub.publish("SEND_MESSAGE", {
-          message: message,
+          message: {
+            ...discussion,
+            User: discussion.User,
+            Receiver: discussion.Receiver ?? null,
+          },
         });
-        return {
-          message: "message envoyé",
-          success: true,
-        } as MessageResponse;
+        return discussion;
       }
     } catch (error) {
       console.log(error);
@@ -221,22 +317,16 @@ export class MessageResolver {
   @Mutation(() => MessageResponse)
   async writtingCheck(
     @Arg("userId") userId: number,
-    @Arg("receiverId", { nullable: true }) receiverId: number,
-    @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
+    @Arg("discussionId") discussionId: number,
     @Arg("isWritting") isWritting: boolean,
     @Ctx() ctx: Context,
     @PubSub() pubsub: PubSubEngine
   ) {
     try {
-      const discussGroup = discussGroupId
-        ? await ctx.prisma.discussGroup.findUnique({
-            where: { id: discussGroupId },
-          })
-        : null;
+      const user = await ctx.prisma.user.findUnique({ where: { id: userId } });
       const payload = {
-        userId,
-        receiverId,
-        discussGroup,
+        user: { ...user, status: true },
+        discussionId,
         isWritting,
       };
       await pubsub.publish("WRITE_MESSAGE", { write: payload });
@@ -245,54 +335,6 @@ export class MessageResolver {
         success: true,
       } as MessageResponse;
     } catch (error) {
-      return new ApolloError("une erreur s'est produite");
-    }
-  }
-
-  @Authorized()
-  @Query(() => [MessageWithRecepter])
-  async messageTwoUser(
-    @Arg("userId") userId: number,
-    @Arg("receiverId", { nullable: true }) receiverId: number,
-    @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
-    @Ctx() ctx: Context
-  ) {
-    try {
-      if (receiverId) {
-        const messagesByUserId = await ctx.prisma.message.findMany({
-          where: {
-            userId: userId,
-            receiverId: receiverId,
-          },
-          include: {
-            User: true,
-          },
-        });
-        const messageByReceiverId = await ctx.prisma.message.findMany({
-          where: {
-            userId: receiverId,
-            receiverId: userId,
-          },
-          include: {
-            User: true,
-          },
-        });
-        const orderRed = [...messagesByUserId, ...messageByReceiverId].sort(
-          (a, b) => a.id - b.id
-        );
-        return orderRed;
-      }
-      const messagesGroup = await ctx.prisma.message.findMany({
-        where: {
-          discussGroupId: discussGroupId,
-        },
-        include: {
-          User: true,
-        },
-      });
-      return messagesGroup;
-    } catch (error) {
-      console.log(error);
       return new ApolloError("une erreur s'est produite");
     }
   }

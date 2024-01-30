@@ -51,4 +51,4 @@ jobs:
 
       - name: launch app
         run: |
-          docker run -d -p 80:80 ghcr.io/${{ github.repository_owner }}/back:latest
+          sudo docker run -d -p 4200:4200 ghcr.io/${{ github.repository_owner }}/back:latest

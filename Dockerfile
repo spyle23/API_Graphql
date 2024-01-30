@@ -17,4 +17,4 @@ COPY . .
 
 EXPOSE 4200
 
-CMD yarn start
+CMD yarn dev

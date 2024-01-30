@@ -9,7 +9,6 @@ COPY tsconfig.json ./
 COPY .env ./
 COPY prisma ./
 RUN yarn --exact
-RUN yarn types:generate
 
 
 COPY ["package.json", "./"]

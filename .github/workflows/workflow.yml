@@ -24,7 +24,6 @@ jobs:
 
       - name: build app
         run : | 
-          yarn types:generate
           yarn build 
           
 

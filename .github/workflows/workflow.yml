@@ -37,8 +37,8 @@ jobs:
     steps:
       - name: connect to ec2 instance
         run: |
-          which ssh-agent || (apt-get update - y && apt-get install openssh-client -y)
-          eval $(ssh-agent -s)
+          # which ssh-agent || (apt-get update - y && apt-get install openssh-client -y)
+          # eval $(ssh-agent -s)
           mkdir -p ~/.ssh
           echo "${{secrets.STAGE_ID_RSA}}" | tr -d '\r' > ~/.ssh/api_graphql.pem
           chmod 600 ~/.ssh/api_graphql.pem

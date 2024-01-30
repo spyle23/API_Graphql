@@ -28,3 +28,28 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/back:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: connect to ec2 instance
+        run: |
+          which ssh-agent || (apt-get update - y && apt-get install openssh-client -y)
+          eval $(ssh-agent -s)
+          mkdir -p ~/.ssh
+          echo "${{secrets.STAGE_ID_RSA}}" | tr -d '\r' > ~/.ssh/api_graphql.pem
+          chmod 600 ~/.ssh/api_graphql.pem
+          ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/sekoly.pem ${{secrets.STAGE_SERVER_USER}}@${{secrets.STAGE_SERVER_IP}} <<EOF
+
+      - name: login and pull docker image
+        run: |
+          docker login ghcr.io -u ${{ github.repository_owner }} -p ${{ secrets.GHCR_TOKEN }}
+          docker pull ghcr.io/${{ github.repository_owner }}/back:latest
+      
+      - name: launch app
+        run: |
+          docker run -d -p 80:80 ghcr.io/${{ github.repository_owner }}/back:latest
+

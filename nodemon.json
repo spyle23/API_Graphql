@@ -2,5 +2,5 @@
   "verbose": false,
   "watch": ["./src"],
   "ext": "js,ts",
-  "exec": "NODE_ENV=developpement ts-node --experimental-specifier-resolution=node  src/index.ts"
+  "exec": "SET NODE_ENV=developpement && ts-node --experimental-specifier-resolution=node  src/index.ts"
 }

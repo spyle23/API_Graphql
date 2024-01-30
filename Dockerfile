@@ -9,4 +9,4 @@ RUN yarn types:generate
 
 EXPOSE 4200
 
-CMD yarn dev
+CMD yarn start

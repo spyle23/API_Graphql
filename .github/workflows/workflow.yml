@@ -48,3 +48,5 @@ jobs:
           ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/api_graphql.pem ${{secrets.STAGE_SERVER_USER}}@${{secrets.STAGE_SERVER_IP}} <<EOF
           sudo docker login ghcr.io -u ${{ github.repository_owner }} -p ${{ secrets.GHCR_TOKEN }}
           sudo docker pull ghcr.io/${{ github.repository_owner }}/back:latest
+          sudo docker stop $(docker ps -q)
+          sudo docker run -d -p 4200:4200 ghcr.io/${{github.repository_owner}}/back:latest

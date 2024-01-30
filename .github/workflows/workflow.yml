@@ -20,7 +20,7 @@ jobs:
         run: echo "${{ secrets.ENV_PRODUCTION }}" | tr -d '\r' > .env
 
       - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN  }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+        run: echo "${{ secrets.GHCR_TOKEN  }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
       - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v2

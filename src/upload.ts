@@ -46,6 +46,8 @@ export class S3Management {
     //   },
     //   region: this.bucketRegion,
     // });
+    console.log(this.accessKeyId);
+    console.log(this.secretKeyAcess);
     this.s3 = new S3Client({
       credentials: {
         accessKeyId: this.accessKeyId,

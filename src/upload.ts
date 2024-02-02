@@ -11,6 +11,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 
 enum TypeFile {
   IMAGE = "image",
@@ -84,8 +85,17 @@ export class S3Management {
       //     .on("finish", () => res(uploadDir))
       //     .on("error", rej);
       // });
-      const command = new PutObjectCommand(uploadParams);
-      await this.s3.send(command);
+      const parallelUpload = new Upload({
+        client: this.s3,
+        params: uploadParams,
+        queueSize: 4,
+        partSize: 1024 * 1024 * 5,
+        leavePartsOnError: false,
+      });
+      parallelUpload.on("httpUploadProgress", (progress) => {
+        console.log(progress);
+      });
+      await parallelUpload.done();
       const fileToSave: Partial<FileExt> = {
         name: filename,
         url: `${type}/${newFileName}`,

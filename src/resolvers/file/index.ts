@@ -9,11 +9,10 @@ import {
   Mutation,
   Resolver,
 } from "type-graphql";
-import { deleteFile, uploadFile } from "../../upload";
+import { S3Management } from "../../upload";
 import GraphQLUpload from "graphql-upload/GraphQLUpload.mjs";
 import { FileUpload } from "../../Types/FileUpload";
 import { FileExt } from "@generated/type-graphql/models";
-import { Context } from "../../context";
 
 @InputType({ description: "input for the file" })
 class UploadInput {
@@ -29,11 +28,12 @@ class UploadInput {
 
 @Resolver(String)
 export class FileResolver {
+  private bucketManagement: S3Management = new S3Management();
   @Authorized()
   @Mutation(() => [FileExt])
   async upload(@Arg("data", () => [GraphQLUpload]) data: FileUpload[]) {
     try {
-      const fileUrls = await uploadFile(data);
+      const fileUrls = await this.bucketManagement.uploadFile(data);
       return fileUrls;
     } catch (error) {
       console.log(error);
@@ -45,7 +45,7 @@ export class FileResolver {
   @Mutation(() => String)
   async deleteFile(@Arg("url") url: string) {
     try {
-      const response = await deleteFile(url);
+      const response = await this.bucketManagement.deleteFile(url);
       if (response) return "Le fichier a été supprimé avec succès";
     } catch (error) {
       return new ApolloError("une erreur s'est produite");

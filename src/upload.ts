@@ -4,7 +4,13 @@ import { FileUpload } from "./Types/FileUpload";
 // import path from "path";
 // import { fileURLToPath } from "url";
 import { FileExt } from "@generated/type-graphql/models";
-import AWS from "aws-sdk";
+
+import {
+  DeleteObjectCommand,
+  DeleteObjectCommandInput,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 enum TypeFile {
   IMAGE = "image",
@@ -26,21 +32,30 @@ export class S3Management {
   bucketRegion: string = process.env.AWS_BUCKET_REGION;
   accessKeyId: string = process.env.AWS_ACCESS_KEY_ID;
   secretKeyAcess: string = process.env.AWS_SECRET_KEY;
-  private s3: AWS.S3;
+  private s3: S3Client;
 
   constructor() {
-    AWS.config.update({
+    // JS SDK v3 does not support global configuration.
+    // Codemod has attempted to pass values to each service client in this file.
+    // You may need to update clients outside of this file, if they use global config.
+    // AWS.config.update({
+    //   credentials: {
+    //     accessKeyId: this.accessKeyId,
+    //     secretAccessKey: this.secretKeyAcess,
+    //   },
+    //   region: this.bucketRegion,
+    // });
+    this.s3 = new S3Client({
       credentials: {
         accessKeyId: this.accessKeyId,
         secretAccessKey: this.secretKeyAcess,
       },
+
       region: this.bucketRegion,
     });
-    this.s3 = new AWS.S3();
   }
 
   async uploadFile(data: FileUpload[]): Promise<Partial<FileExt>[]> {
-    console.log("config", AWS.config);
     const fileExt: Partial<FileExt>[] = [];
 
     for (const file of data) {
@@ -69,10 +84,11 @@ export class S3Management {
       //     .on("finish", () => res(uploadDir))
       //     .on("error", rej);
       // });
-      const result = await this.s3.upload(uploadParams).promise();
+      const command = new PutObjectCommand(uploadParams);
+      await this.s3.send(command);
       const fileToSave: Partial<FileExt> = {
         name: filename,
-        url: result.Key,
+        url: `${type}/${newFileName}`,
         extension: mimetype,
       };
 
@@ -83,18 +99,12 @@ export class S3Management {
   }
 
   async deleteFile(url: string): Promise<boolean> {
-    const params: AWS.S3.DeleteObjectRequest = {
+    const params: DeleteObjectCommandInput = {
       Bucket: this.bucketName,
       Key: url,
     };
-    return new Promise((res, rej) => {
-      this.s3.deleteObject(params, (err, data) => {
-        if (data) {
-          res(true);
-        } else {
-          rej(err);
-        }
-      });
-    });
+    const deleteCommand = new DeleteObjectCommand(params);
+    await this.s3.send(deleteCommand);
+    return true;
   }
 }

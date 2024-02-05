@@ -89,27 +89,57 @@ export class FriendRequestResolver {
     @Ctx() ctx: Context
   ) {
     try {
-      const filters: any = {
-        where: {
-          OR: [{ userId }, { receiverId: userId }],
-          status: RequestStatus.ACCEPTED,
-        },
-        include: {
-          User: true,
-          Receiver: true,
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-        take: limit,
-      };
-      const request = (await ctx.prisma.friendRequest.findMany(
-        cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
-      )) as (FriendRequest & { User: User; Receiver: User })[];
-      const friends = request.map<User>((val) =>
-        val.User.id !== userId ? val.User : val.Receiver
-      );
-      return friends;
+      if (status) {
+        const filters: any = {
+          where: {
+            id: { not: userId },
+            OR: [
+              {
+                request: {
+                  some: { receiverId: userId, status: RequestStatus.ACCEPTED },
+                },
+              },
+              {
+                friendRequest: {
+                  some: { userId, status: RequestStatus.ACCEPTED },
+                },
+              },
+            ],
+            status: true,
+          },
+          orderBy: {
+            updatedAt: "desc",
+          },
+          take: limit,
+        };
+        const another = await ctx.prisma.user.findMany(
+          cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+        );
+        return another;
+      } else {
+        const filters: any = {
+          where: {
+            OR: [{ userId }, { receiverId: userId }],
+            status: RequestStatus.ACCEPTED,
+          },
+          include: {
+            User: true,
+            Receiver: true,
+          },
+          orderBy: {
+            updatedAt: "desc",
+          },
+          take: limit,
+        };
+
+        const request = (await ctx.prisma.friendRequest.findMany(
+          cursor ? { ...filters, cursor: { id: cursor }, skip: 1 } : filters
+        )) as (FriendRequest & { User: User; Receiver: User })[];
+        const friends = request.map<User>((val) =>
+          val.User.id !== userId ? val.User : val.Receiver
+        );
+        return friends;
+      }
     } catch (error) {
       return new ApolloError("une erreur s'est produite");
     }

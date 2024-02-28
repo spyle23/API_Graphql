@@ -118,6 +118,7 @@ type FileExt {
   commentId: Int
   createdAt: DateTime!
   extension: String!
+  groupId: Int
   id: Int!
   messageId: Int
   name: String!
@@ -239,7 +240,7 @@ type Mutation {
   createComment(commentInput: CommentInput!, postId: Float!, userId: Float!): String!
   createDiscussGroup(data: DiscussGroupInput!, userChoose: UserChoose!, userId: Float!): DiscussGroupDiscussion!
   createDiscussion(receiverId: Float!, userId: Float!): DiscussionExtend!
-  createPost(data: PostInput!, userId: Float!): String!
+  createPost(data: PostInput!, groupId: Float, userId: Float!): String!
   deleteComment(commentId: Float!, userId: Float!): String!
   deleteFile(url: String!): String!
   deleteFriend(receiverId: Float!, userId: Float!): String!
@@ -273,6 +274,7 @@ type Post {
   _count: PostCount
   createdAt: DateTime!
   description: String!
+  groupId: Int
   id: Int!
   updatedAt: DateTime!
   userId: Int!
@@ -290,6 +292,7 @@ type PostDisplay {
   createdAt: DateTime!
   description: String!
   files: [FileExt!]!
+  groupId: Int
   id: Int!
   nbComments: Float!
   reactions: [Reaction!]
@@ -403,6 +406,7 @@ type User {
   firstname: String
   id: Int!
   lastname: String
+  mode: UserMode!
   password: String!
   photo: String
   status: Boolean!
@@ -417,6 +421,7 @@ input UserChoose {
 
 type UserCount {
   Post: Int!
+  UserGroup: Int!
   comments: Int!
   discussions: Int!
   friendRequest: Int!
@@ -436,6 +441,11 @@ type UserDetails {
   user: User!
 }
 
+enum UserMode {
+  DARK
+  LIGHT
+}
+
 type UserOnDiscussGroup {
   createdAt: DateTime!
   discussGroupId: Int!
@@ -452,6 +462,7 @@ type UserWithToken {
   firstname: String
   id: Int!
   lastname: String
+  mode: UserMode!
   password: String!
   photo: String
   status: Boolean!

@@ -98,24 +98,28 @@ export class PostResolver {
   async createPost(
     @Arg("data") data: PostInput,
     @Arg("userId") userId: number,
+    @Arg("groupId", { nullable: true }) groupId: number,
     @Ctx() ctx: Context
   ) {
     try {
       const { files, description } = data;
-      const post = await ctx.prisma.post.create({
-        data: {
-          description,
-          files: {
-            createMany: {
-              data: files,
-            },
-          },
-          user: {
-            connect: {
-              id: userId,
-            },
+      const input = {
+        description,
+        files: {
+          createMany: {
+            data: files,
           },
         },
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+      };
+      const post = await ctx.prisma.post.create({
+        data: groupId
+          ? { ...input, Group: { connect: { id: groupId } } }
+          : input,
       });
 
       return "post crée";

@@ -31,6 +31,16 @@ enum CallStatus {
     ENDED
 }
 
+enum GroupRole {
+    ADMIN
+    MEMBERS
+}
+
+enum UserMode {
+    LIGHT
+    DARK
+}
+
 model User {
     id                  Int                  @id @default(autoincrement())
     email               String               @unique
@@ -38,6 +48,7 @@ model User {
     firstname           String?
     lastname            String?
     password            String
+    mode                UserMode             @default(LIGHT)
     photo               String?              @db.Text
     civilite            String?
     createdAt           DateTime             @default(now())
@@ -55,15 +66,16 @@ model User {
     notifications       Notification[]
     VideoCall           VideoCall?           @relation(fields: [videoCallId], references: [id])
     videoCallId         Int?
+    UserGroup           UserGroup[]
 }
 
 model FriendRequest {
     id         Int           @id @default(autoincrement())
     status     RequestStatus
     Receiver   User          @relation(fields: [receiverId], references: [id], name: "request-received")
-    receiverId Int           
+    receiverId Int
     User       User          @relation(fields: [userId], references: [id], name: "request-send")
-    userId     Int           
+    userId     Int
     createdAt  DateTime      @default(now())
     updatedAt  DateTime      @updatedAt
 }
@@ -95,6 +107,8 @@ model FileExt {
     messageId Int?
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    Group     Group?   @relation(fields: [groupId], references: [id])
+    groupId   Int?
 }
 
 model Post {
@@ -107,6 +121,8 @@ model Post {
     comments    Comment[]
     createdAt   DateTime   @default(now())
     updatedAt   DateTime   @updatedAt
+    Group       Group?     @relation(fields: [groupId], references: [id])
+    groupId     Int?
 }
 
 model Reaction {
@@ -189,4 +205,26 @@ model VideoCall {
     createdAt    DateTime   @default(now())
     updatedAt    DateTime   @updatedAt
     discussionId Int        @unique
+}
+
+model Group {
+    id           Int         @id @default(autoincrement())
+    name         String
+    description  String
+    coverPhoto   String
+    publications Post[]
+    files        FileExt[]
+    UserGroup    UserGroup[]
+    createdAt    DateTime    @default(now())
+    updatedAt    DateTime    @updatedAt
+}
+
+model UserGroup {
+    User    User      @relation(fields: [userId], references: [id])
+    userId  Int
+    Group   Group     @relation(fields: [groupId], references: [id])
+    groupId Int
+    role    GroupRole
+
+    @@id([userId, groupId])
 }

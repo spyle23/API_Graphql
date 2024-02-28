@@ -40,6 +40,7 @@ export class MessageResolver {
       { userId: number },
       Context
     >) => {
+      if (payload.message.messages[0].userId === args.userId) return false;
       if (payload.message.DiscussGroup) {
         return payload.message.DiscussGroup.members.find(
           (i) => i.userId === args.userId

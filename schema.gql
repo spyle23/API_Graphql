@@ -392,6 +392,7 @@ input UpdateUserInput {
   email: String
   firstname: String
   lastname: String
+  mode: String
   photo: String
 }
 

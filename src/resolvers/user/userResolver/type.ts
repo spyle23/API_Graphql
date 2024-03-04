@@ -1,5 +1,6 @@
 //@ts-nocheck
 import { User, FriendRequest } from "@generated/type-graphql/models";
+import { UserMode } from "@generated/type-graphql/enums";
 import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { ResponseForm } from "../../../Types/ResponseForm";
@@ -65,6 +66,9 @@ export class UpdateUserInput implements Partial<User> {
 
   @Field({ nullable: true })
   civilite?: string;
+
+  @Field({ nullable: true })
+  mode?: UserMode;
 
   @Field({ nullable: true })
   photo?: string;

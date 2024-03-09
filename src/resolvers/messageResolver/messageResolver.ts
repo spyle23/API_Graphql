@@ -345,7 +345,9 @@ export class MessageResolver {
         pubSub,
         ctx
       );
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   @Authorized()

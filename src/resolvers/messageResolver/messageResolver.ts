@@ -26,9 +26,13 @@ import {
 } from "./type";
 import { ApolloError } from "apollo-server-express";
 import { DiscussionExtend } from "../discussion/type";
+import GraphQLUpload from "graphql-upload/GraphQLUpload.mjs";
+import { FileUpload } from "../../Types/FileUpload";
+import { S3Management } from "../../upload";
 
 @Resolver(Message)
 export class MessageResolver {
+  private bucketManagement: S3Management = new S3Management();
   @Subscription({
     topics: "SEND_MESSAGE",
     filter: async ({
@@ -312,6 +316,36 @@ export class MessageResolver {
       console.log(error);
       return new ApolloError("Une erreur s'est produite");
     }
+  }
+
+  @Authorized()
+  @Mutation(() => DiscussionExtend)
+  async sendMessageDiscussGroupMobile(
+    @Arg("data", () => [GraphQLUpload], { nullable: true }) data: FileUpload[],
+    @Arg("messageInput") messageInput: MessageInput,
+    @Arg("userId") userId: number,
+    @Arg("discussionId") discussionId: number,
+    @Arg("receiverId", { nullable: true }) receiverId: number,
+    @Arg("discussGroupId", { nullable: true }) discussGroupId: number,
+    @PubSub() pubSub: PubSubEngine,
+    @Ctx() ctx: Context
+  ) {
+    try {
+      const fileUrls = data ? await this.bucketManagement.uploadFile(data) : [];
+      const redefinedMessageInput: MessageInput = {
+        ...messageInput,
+        files: fileUrls as any[],
+      };
+      return await this.sendMessageDiscoussGroup(
+        redefinedMessageInput,
+        userId,
+        discussionId,
+        receiverId,
+        discussGroupId,
+        pubSub,
+        ctx
+      );
+    } catch (error) {}
   }
 
   @Authorized()

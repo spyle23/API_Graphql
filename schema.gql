@@ -254,6 +254,7 @@ type Mutation {
   returnSignal(audio: Boolean!, receiverId: Float!, signal: String!, userId: Float!, video: Boolean!): String!
   sendFriendRequest(receiverId: Float!, userId: Float!): String!
   sendMessageDiscoussGroup(discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): DiscussionExtend!
+  sendMessageDiscussGroupMobile(data: [Upload!], discussGroupId: Float, discussionId: Float!, messageInput: MessageInput!, receiverId: Float, userId: Float!): DiscussionExtend!
   sendSignal(audio: Boolean!, receiverId: Float!, signal: String!, userId: Float!, video: Boolean!): String!
   signup(userInput: SignupInput!): LoginResponseForm!
   updateUser(updateUserInput: UpdateUserInput!, userId: Float!): String!
